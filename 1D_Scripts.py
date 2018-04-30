@@ -61,7 +61,7 @@ bl_info = {
     "category": "Mesh"
 }
 
-# https://www.dropbox.com/s/9f4ezrxe89x4x3k/1D_Scripts.py
+# https://github.com/Cfyzzz/Scripts/blob/master/1D_Scripts.py
 
 import bpy, bmesh, mathutils, math
 from mathutils import Vector, Matrix
