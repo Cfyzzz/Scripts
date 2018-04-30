@@ -45,17 +45,23 @@
 # 0-9-2(06.04.2018) Change (Render = Prev/Next) - select and set active current cam
 # 0-9-3(09.04.2018) Change (Naming/Instances = Select iinstances) add separate by type object: MESH, CURVE
 # 0-9-4(13.04.2018) Change (Naming/Instances = Select iinstances) add message format: selected, inst, unique
+# 0-9-5(15.04.2018) Change (Search instances 1 and 2) unified search logic
+# 0-9-6(15.04.2018) Added (TestZone: Instance Resizer)
+# 0-9-7(21.04.2018) Fix(Naming/Instances = Guess Active Instancess) select find objects
+# 0-9-8(23.04.2018) Fix(Naming/Instances = Guess Chain Instancess) select find objects
+# 0-9-9(28.04.2018) Change (Naming/Instances = Propagate Obname) array processing
+# 0-9-10(30.04.2018) Fix (Naming/Instances = Propagate Obname) array processing
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 4),
+    "version": (0, 9, 10),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
 }
 
-# https://www.dropbox.com/s/xf4lbn5l87bmdzb/1D_Scripts.py
+# https://www.dropbox.com/s/9f4ezrxe89x4x3k/1D_Scripts.py
 
 import bpy, bmesh, mathutils, math
 from mathutils import Vector, Matrix
@@ -973,6 +979,14 @@ def create_instance(obj, scene):
     return duplicated
 
 
+def compare_notstrict_list_order(list_1, list_2):
+    count = 0
+    _list_1 = set(list_1)
+    for element in _list_1:
+        count += list_2.count(element)
+    return len(list_1) == count == len(list_2)
+
+
 class BTBatchOperatorMixin(object):
     """
     Abstract base class for batch processing objects
@@ -1164,13 +1178,6 @@ class BTDropInstancesOperator(bpy.types.Operator):
 # ----------- END --- Bargool_1D_tools
 
 # ----------- BEGIN --- Smart UV
-
-from mesh_looptools import (
-    get_connected_selections,
-    edgekey,
-)
-
-
 def compare_loops(luv1, luv2):
     return luv1 == luv2 or abs(luv1.uv[0] - luv2.uv[0]) < 0.001 and \
            abs(luv1.uv[1] - luv2.uv[1]) < 0.001
@@ -7637,8 +7644,9 @@ class LayoutSSPanel(bpy.types.Panel):
                 if lt.disp_si2 else 'RIGHTARROW')
             if lt.disp_si2:
                 row = col_top.row(align=True)
-                row2 = row.box().box()
+                row2 = row.box().box().row()
                 row2.prop(lt, 'si_percent', text='Percent')
+                row2.prop(lt, 'filter_mats', icon='MATERIAL', text='')
             row = col_top.row(align=True)
             row.operator("paul.gsl", text='Group Select Linked')
 
@@ -7654,6 +7662,9 @@ class LayoutSSPanel(bpy.types.Panel):
         if lt.disp_test:
             box = col.column(align=True).box().column()
             col_top = box.column(align=True)
+            row = col_top.row(align=True)
+            row.operator("paul.instance_resizer", text='Instance Resizer')
+
             row = col_top.row(align=True)
             row.operator("paul.mats_equalize", text='Mats equalize')
 
@@ -8628,17 +8639,44 @@ class PaPropagateObname(bpy.types.Operator):
 
     def execute(self, context):
         edit_mode_out()
+        selected_objs = context.selected_objects[:]
+        must_select_objs = []
+        candidates_active_objs = []
+        messages = []
+        for act_obj in selected_objs:
+            if act_obj in must_select_objs:
+                continue
+            bpy.ops.object.select_all(action="DESELECT")
+            context.scene.objects.active = act_obj
+            act_obj.select = True
+            bpy.ops.paul.obname_to_meshname()
+            bpy.ops.paul.select_instances()
+            messages.append(context.scene['report'])
+            objs = bpy.context.selected_objects
+            active_obj_name = sorted([o.name for o in objs])[0]
+            _act_obj = context.scene.objects[active_obj_name]
+            context.scene.objects.active = _act_obj
+            _act_obj.data.name = _act_obj.name
+            must_select_objs.extend(objs)
+            candidates_active_objs.append(active_obj_name)
+
         bpy.ops.object.select_all(action="DESELECT")
-        context.active_object.select = True
-        bpy.ops.paul.obname_to_meshname()
-        bpy.ops.paul.select_instances()
-        self.report({'INFO'}, context.scene['report'])
-        bpy.ops.paul.meshname_to_obname()
-        objs = bpy.context.selected_objects
-        for obj in objs:
-            if obj.name == obj.data.name:
-                context.scene.objects.active = obj
-                break
+        for obj in must_select_objs:
+            obj.select = True
+
+        active_obj_name = sorted(candidates_active_objs)[0]
+        context.scene.objects.active = context.scene.objects[active_obj_name]
+        total_selected_objects = 0
+        total_instances = 0
+        total_unique = 0
+        for message in messages:
+            row_line = message.split()
+            total_selected_objects += int(row_line[0])
+            total_instances += int(row_line[2])
+            total_unique += int(row_line[4])
+
+        message = "{} selected, {} inst, {} unique".format(total_selected_objects, total_instances, total_unique)
+        self.report({'INFO'}, message)
         return {'FINISHED'}
 
 
@@ -9874,6 +9912,75 @@ class PaInstancesUnique(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class PaInstanceResizer(bpy.types.Operator):
+    """Сбрасывет выкрученный масштаб всем инстансам, принимая как-нибудь из расставленных за scale=1"""
+    bl_idname = "paul.instance_resizer"
+    bl_label = "Instances resizer"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        names = []
+        instances_objs = []
+        sel_objs = context.selected_objects
+        one_obj = []
+
+        bpy.ops.object.select_all(action='DESELECT')
+
+        for i in sel_objs:
+            if i.name in names:
+                continue
+            i.select = True
+            context.scene.objects.active = i
+            bpy.ops.object.select_linked(type='OBDATA')
+            if len(context.selected_objects) > 1:
+                sel_inst_objs = context.selected_objects
+                instances_objs.append(sel_inst_objs)
+                for obj in sel_inst_objs:
+                    names.append(obj.name)
+            bpy.ops.object.select_all(action='DESELECT')
+
+        for ins_objs in instances_objs:
+            dim = []
+            scale = []
+            for obj in ins_objs:
+                obj.select = True
+                scale.append(obj.scale.copy())
+                dim.append(obj.dimensions.copy())
+
+            context.scene.objects.active = None
+            for obj in context.selected_objects:
+                if obj.scale[0] > 0 and obj.scale[1] > 0 and obj.scale[2] > 0:
+                    context.scene.objects.active = obj
+                    break
+            else:
+                context.scene.objects.active = context.selected_objects[0]
+
+            bpy.ops.object.make_single_user(object=True, obdata=True)
+            bpy.ops.object.transform_apply(scale=True)
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.mesh.normals_make_consistent(inside=False)
+            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.make_links_data(type='OBDATA')
+
+            for j, o in enumerate(ins_objs):
+                o.dimensions = dim[j]
+                if scale[j][0] < 0:
+                    o.scale[0] *= -1
+                if scale[j][1] < 0:
+                    o.scale[1] *= -1
+                if scale[j][2] < 0:
+                    o.scale[2] *= -1
+
+            one_obj.append(context.active_object)
+            bpy.ops.object.select_all(action='DESELECT')
+
+        for obj in one_obj:
+            obj.select = True
+
+        return {'FINISHED'}
+
+
 class PaObjNegScale(bpy.types.Operator):
     bl_idname = "paul.obj_filter_neg_scale"
     bl_label = "Obj filter negative scale"
@@ -10741,73 +10848,16 @@ class PaSearchInstanses1(bpy.types.Operator):
                context.active_object.type == 'MESH'
 
     def execute(self, context):
-        def compMeshesVerts2(obj1, obj2, treshold, percent):
-            mesh1 = obj1.data
-            size = len(mesh1.vertices)
-            kd = mathutils.kdtree.KDTree(size)
-
-            for i, v in enumerate(mesh1.vertices):
-                kd.insert(v.co, i)
-
-            kd.balance()
-            sel_v = 0
-            mesh2 = obj2.data
-            size2 = len(mesh2.vertices)
-            kd2 = mathutils.kdtree.KDTree(size2)
-            for i, v in enumerate(mesh2.vertices):
-                kd2.insert(v.co, i)
-                co, index, dist = kd.find(v.co)
-                if dist > treshold:
-                    sel_v += 1
-
-            kd2.balance()
-            for i, v in enumerate(mesh1.vertices):
-                co, index, dist = kd2.find(v.co)
-                if dist > treshold:
-                    sel_v += 1
-
-            percent_ = 100 - sel_v / len(mesh2.vertices) * 100
-            return percent_ >= percent
-
         config = bpy.context.window_manager.paul_manager
-        TRESHOLD = 0.002
-        PERCENT = config.si_percent
+        self.TRESHOLD = 0.002
+        self.PERCENT = config.si_percent
 
         sel_objs = bpy.context.selected_objects
         act_obj = bpy.context.active_object
-        act_mesh = act_obj.data
-        len_act_verts = len(act_mesh.vertices)
-        meshes = {act_mesh.name: True}
-
-        mats_act_obj = [slot.material for slot in act_obj.material_slots]
-
-        for obj in sel_objs:
-            if obj.type != 'MESH':
-                obj.select = False
-                continue
-
-            mesh = obj.data
-            if obj == act_obj: continue
-            if len(mesh.vertices) != len_act_verts:
-                obj.select = False
-                meshes[mesh.name] = False
-                continue
-
-            if config.filter_mats:
-                mats_obj = [slot.material for slot in obj.material_slots]
-                if mats_obj != mats_act_obj:
-                    obj.select = False
-                    meshes[mesh.name] = False
-                    continue
-
-            if mesh.name in meshes:
-                obj.select = meshes[mesh.name]
-                continue
-
-            result = compMeshesVerts2(act_obj, obj, TRESHOLD, PERCENT)
-            meshes[mesh.name] = result
-            obj.select = result
-
+        instances = PaSearchInstanses2.findFragments(self, act_obj, sel_objs, config.filter_mats)
+        bpy.ops.object.select_all(action='DESELECT')
+        for obj in instances:
+            obj.select = True
         return {'FINISHED'}
 
 
@@ -10817,7 +10867,7 @@ class PaSearchInstanses2(bpy.types.Operator):
     bl_label = "Search Instanses"
     bl_options = {'REGISTER', 'UNDO'}
 
-    def execute(self, context):
+    def findFragments(self, act_obj, sel_objs, filter_mats):
         def compMeshesVerts2(obj1, obj2, treshold, percent):
             mesh1 = obj1.data
             size = len(mesh1.vertices)
@@ -10846,31 +10896,44 @@ class PaSearchInstanses2(bpy.types.Operator):
             percent_ = 100 - sel_v / len(mesh2.vertices) * 100
             return percent_ >= percent
 
-        def findFragments(act_obj, sel_objs):
-            act_mesh = act_obj.data
-            len_act_verts = len(act_mesh.vertices)
-            meshes = {act_mesh.name: True}
-            to_sel_objs = []
+        act_mesh = act_obj.data
+        len_act_verts = len(act_mesh.vertices)
+        meshes = {act_mesh.name: True}
+        to_sel_objs = []
+        mats_act_obj = [slot.material for slot in act_obj.material_slots]
 
-            for obj in sel_objs:
-                mesh = obj.data
-                if len(mesh.vertices) != len_act_verts:
+        for obj in sel_objs:
+            mesh = obj.data
+
+            if len(mesh.vertices) != len_act_verts:
+                meshes[mesh.name] = False
+                continue
+
+            if filter_mats:
+                mats_obj = [slot.material for slot in obj.material_slots]
+                # if mats_obj != mats_act_obj:
+                if not compare_notstrict_list_order(mats_obj, mats_act_obj):
                     meshes[mesh.name] = False
                     continue
 
-                if mesh.name in meshes and meshes[mesh.name]:
+            if mesh.name in meshes:
+                # obj.select = meshes[mesh.name]
+                if meshes[mesh.name]:
                     to_sel_objs.append(obj)
-                    continue
+                continue
 
-                result = compMeshesVerts2(act_obj, obj, TRESHOLD, PERCENT)
-                meshes[mesh.name] = result
-                if result: to_sel_objs.append(obj)
+            result = compMeshesVerts2(act_obj, obj, self.TRESHOLD, self.PERCENT)
+            meshes[mesh.name] = result
+            # obj.select = result
+            if result:
+                to_sel_objs.append(obj)
 
-            return to_sel_objs
+        return to_sel_objs
 
+    def execute(self, context):
         config = bpy.context.window_manager.paul_manager
-        TRESHOLD = 0.002
-        PERCENT = config.si_percent
+        self.TRESHOLD = 0.002
+        self.PERCENT = config.si_percent
 
         sel_objs = [o for o in bpy.context.selected_objects if o.type == 'MESH']
         blacklist_objs = []
@@ -10880,36 +10943,46 @@ class PaSearchInstanses2(bpy.types.Operator):
             if act_obj in blacklist_objs: continue
             act_len_vts = len(act_obj.data.vertices)
             to_select_objs = [act_obj]
+            mats_act_obj = [slot.material for slot in act_obj.material_slots]
             for obj in sel_objs:
                 if obj == act_obj: continue
                 len_vts = len(obj.data.vertices)
                 if act_len_vts == len_vts:
+                    if config.filter_mats:
+                        mats_obj = [slot.material for slot in obj.material_slots]
+                        if not compare_notstrict_list_order(mats_obj, mats_act_obj):
+                            continue
+
                     to_select_objs.append(obj)
 
             result_list.append(to_select_objs)
             blacklist_objs.extend(to_select_objs)
 
         sort_list = sorted(result_list, key=len, reverse=True)
+        chain_instances = []
 
-        for chain in sort_list:
-            act_obj = chain[0]
-            sel_objs = chain[1:]
-            act_mesh = act_obj.data
+        for prev_chain in sort_list:
+            black_chain_instances = []
+            for idx, act_obj in enumerate(prev_chain):
+                if act_obj in black_chain_instances:
+                    continue
+                sel_objs = prev_chain[idx + 1:]
+                if sel_objs:
+                    local_chain = self.findFragments(act_obj, sel_objs, config.filter_mats)
+                    if local_chain:
+                        chain_instances.append([act_obj] + local_chain)
+                        black_chain_instances.extend(chain_instances[-1])
+                        if len(chain_instances[-1]) == len(prev_chain):
+                            break
 
-            if sel_objs:
-                result = findFragments(act_obj, sel_objs)
-                if result:
-                    ch = [o for o in result if o.data != act_mesh]
-                    if ch == []: continue
-                    result.append(act_obj)
-                    bpy.context.scene.objects.active = act_obj
-
-                bpy.ops.object.select_all(action='DESELECT')
-
-                for o in result:
-                    o.select = True
-
+            if len(chain_instances[-1]) == len(prev_chain):
                 break
+
+        sort_list = sorted(chain_instances, key=len, reverse=True)
+        if sort_list:
+            bpy.ops.object.select_all(action='DESELECT')
+            for obj in sort_list[0]:
+                obj.select = True
 
         return {'FINISHED'}
 
@@ -11098,7 +11171,7 @@ classes = [eap_op0, eap_op1, eap_op2, eap_op3, ChunksOperator, f_op0, \
            BTDropInstancesOperator, PaLoopResolve, PaBarcCreateOperator, PaBarcSetOperator, \
            PaBarcCursorOperator, PaSideShiftStoreDist, PaSideShiftActiveCursor, \
            PaSideShiftBackward, PaSideShiftForward, PaPropagateObname, SUV_OT_spreads, \
-           PaMakeBorder, UvScalerOperator, PaRCS, NATimeLineRenderStart, NGD1_camswitch]
+           PaMakeBorder, UvScalerOperator, PaRCS, NATimeLineRenderStart, NGD1_camswitch, PaInstanceResizer]
 
 addon_keymaps = []
 
