@@ -51,11 +51,12 @@
 # 0-9-8(23.04.2018) Fix(Naming/Instances = Guess Chain Instancess) select find objects
 # 0-9-9(28.04.2018) Change (Naming/Instances = Propagate Obname) array processing
 # 0-9-10(30.04.2018) Fix (Naming/Instances = Propagate Obname) array processing
+# 0-9-11(01.05.2018) Fix (FEDGE) Problems with imported objects, edge.is_loose always False
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 10),
+    "version": (0, 9, 11),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7977,6 +7978,8 @@ class D1_fedge(bpy.types.Operator):
                     dosel(obj, False)
             # loose edges
             if config.fedge_edges:
+                bpy.ops.object.editmode_toggle()
+                bpy.ops.object.editmode_toggle()
                 if self.make_edges(data.edges):
                     dosel(obj, False)
 
