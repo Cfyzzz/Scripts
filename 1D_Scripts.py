@@ -51,11 +51,12 @@
 # 0-9-8(23.04.2018) Fix(Naming/Instances = Guess Chain Instancess) select find objects
 # 0-9-9(28.04.2018) Change (Naming/Instances = Propagate Obname) array processing
 # 0-9-10(30.04.2018) Fix (Naming/Instances = Propagate Obname) array processing
+# 0-9-11(02.05.2018) Change (FEDGE) = fast check edges
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 10),
+    "version": (0, 9, 11),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7716,6 +7717,12 @@ class D1_fedge(bpy.types.Operator):
                 return True
         return False
 
+    def make_edges2(self, bm_edges):
+        for edge in bm_edges:
+            if len(edge.link_faces) == 0:
+                return True
+        return False
+
     def make_non_manifold(self, data):
         edit_mode_in()
         bpy.ops.mesh.select_mode(type='EDGE')
@@ -7977,7 +7984,9 @@ class D1_fedge(bpy.types.Operator):
                     dosel(obj, False)
             # loose edges
             if config.fedge_edges:
-                if self.make_edges(data.edges):
+                bm = bmesh.new()
+                bm.from_mesh(data)
+                if self.make_edges2(bm.edges):
                     dosel(obj, False)
 
             # nonquads
