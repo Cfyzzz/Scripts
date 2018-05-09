@@ -52,11 +52,12 @@
 # 0-9-9(28.04.2018) Change (Naming/Instances = Propagate Obname) array processing
 # 0-9-10(30.04.2018) Fix (Naming/Instances = Propagate Obname) array processing
 # 0-9-11(02.05.2018) Change (FEDGE) = fast check edges
+# 0-9-12(09.05.2018) Added (TestZone: NJoin)
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 11),
+    "version": (0, 9, 12),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7664,6 +7665,9 @@ class LayoutSSPanel(bpy.types.Panel):
             box = col.column(align=True).box().column()
             col_top = box.column(align=True)
             row = col_top.row(align=True)
+            row.operator(PaNJoin.bl_idname, text='Negative Join')
+
+            row = col_top.row(align=True)
             row.operator("paul.instance_resizer", text='Instance Resizer')
 
             row = col_top.row(align=True)
@@ -8561,6 +8565,34 @@ def main_railer(dist=1, z_up=False, follow_path=False, flat=False, instance=Fals
         bm.free()
         bm_l.free()
     return True
+
+
+class PaNJoin(bpy.types.Operator):
+    bl_idname = "paul.njoin"
+    bl_label = "NJoin"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.type == 'MESH'
+
+    def execute(self, context):
+        config = bpy.context.window_manager.paul_manager
+        selected_objs = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
+        act_obj = bpy.context.active_object
+        bpy.ops.paul.obj_filter_neg_scale()
+        bpy.context.scene.objects.active = act_obj
+        act_obj.select = True
+        bpy.ops.object.join()
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.mesh.reveal()
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.flip_normals()
+        bpy.ops.object.editmode_toggle()
+        for obj in selected_objs:
+            obj.select = True
+        bpy.ops.object.join()
+        return {'FINISHED'}
 
 
 class PaMakeBorder(bpy.types.Operator):
@@ -11180,7 +11212,8 @@ classes = [eap_op0, eap_op1, eap_op2, eap_op3, ChunksOperator, f_op0, \
            BTDropInstancesOperator, PaLoopResolve, PaBarcCreateOperator, PaBarcSetOperator, \
            PaBarcCursorOperator, PaSideShiftStoreDist, PaSideShiftActiveCursor, \
            PaSideShiftBackward, PaSideShiftForward, PaPropagateObname, SUV_OT_spreads, \
-           PaMakeBorder, UvScalerOperator, PaRCS, NATimeLineRenderStart, NGD1_camswitch, PaInstanceResizer]
+           PaMakeBorder, UvScalerOperator, PaRCS, NATimeLineRenderStart, NGD1_camswitch, PaInstanceResizer, \
+           PaNJoin]
 
 addon_keymaps = []
 
