@@ -53,6 +53,7 @@
 # 0-9-10(30.04.2018) Fix (Naming/Instances = Propagate Obname) array processing
 # 0-9-11(02.05.2018) Change (FEDGE) = fast check edges
 # 0-9-12(09.05.2018) Added (TestZone: NJoin)
+# 0-9-13(15.05.2018) Fix (TestZone: NJoin) active negative
 
 bl_info = {
     "name": "1D_Scripts",
@@ -8577,18 +8578,27 @@ class PaNJoin(bpy.types.Operator):
         return context.active_object is not None and context.active_object.type == 'MESH'
 
     def execute(self, context):
-        config = bpy.context.window_manager.paul_manager
+        def _flip_normals():
+            bpy.ops.object.editmode_toggle()
+            bpy.ops.mesh.reveal()
+            bpy.ops.mesh.select_all(action="SELECT")
+            bpy.ops.mesh.flip_normals()
+            bpy.ops.object.editmode_toggle()
+
         selected_objs = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
         act_obj = bpy.context.active_object
         bpy.ops.paul.obj_filter_neg_scale()
+        count_neg_objs = len(bpy.context.selected_objects)
         bpy.context.scene.objects.active = act_obj
         act_obj.select = True
-        bpy.ops.object.join()
-        bpy.ops.object.editmode_toggle()
-        bpy.ops.mesh.reveal()
-        bpy.ops.mesh.select_all(action="SELECT")
-        bpy.ops.mesh.flip_normals()
-        bpy.ops.object.editmode_toggle()
+
+        if count_neg_objs > 0:
+            _flip_normals()
+            bpy.ops.object.join()
+            _flip_normals()
+        else:
+            bpy.ops.object.join()
+
         for obj in selected_objs:
             obj.select = True
         bpy.ops.object.join()
