@@ -54,11 +54,12 @@
 # 0-9-11(02.05.2018) Change (FEDGE) = fast check edges
 # 0-9-12(09.05.2018) Added (TestZone: NJoin)
 # 0-9-13(15.05.2018) Fix (TestZone: NJoin) active negative
+# 0-9-14(17.05.2018) Move Panels: LoopResolve and LoopReduce, Remove button AutoUpdate, New format Name Panel with version
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 12),
+    "version": (0, 9, 14),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -6866,7 +6867,7 @@ class LayoutSSPanel(bpy.types.Panel):
         projects = ['XY', 'XZ', 'YZ', 'XYZ']
         return [tuple(3 * [proj]) for proj in projects]
 
-    bl_label = "1D_Scripts "
+    bl_label = "1D_Scripts %d.%d.%d"%bl_info["version"]
     bl_idname = "Paul_Operator"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -7498,10 +7499,6 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("paul.heavy_ngons", text='Heavy NGons')
             row = col_top.row(align=True)
             row.operator("paul.clean_glass", text='Clean Glass')
-            row = col_top.row(align=True)
-            row.operator("paul.verts_project_on_edge", text='Verts project')
-            row.prop(lt, "vproj_active", text='', icon='EDGESEL' \
-                if lt.vproj_active else 'MATCUBE')
 
             row = col_top.row(align=True)
             row.operator("paul.loop_resolve", text='Loop Resolve')
@@ -7518,13 +7515,9 @@ class LayoutSSPanel(bpy.types.Panel):
                 row2.prop(lt, 'loopresolve_relative', text='', icon='ALIGN')
 
             row = col_top.row(align=True)
-            row.operator("paul.loop_reduce", text='Loop reduce')
-            row.prop(lt, "disp_loopreduce", text='', icon='DOWNARROW_HLT' \
-                if lt.disp_loopreduce else 'RIGHTARROW')
-            if lt.disp_loopreduce:
-                row = col_top.row(align=True)
-                row2 = row.box().box()
-                row2.prop(lt, 'loopreduce_step', text='Step')
+            row.operator("paul.verts_project_on_edge", text='Verts project')
+            row.prop(lt, "vproj_active", text='', icon='EDGESEL' \
+                if lt.vproj_active else 'MATCUBE')
 
             row = col_top.row(align=True)
             row.operator("paul.edges_pairfill", text='Edges pairfill')
@@ -7534,6 +7527,15 @@ class LayoutSSPanel(bpy.types.Panel):
                 row = col_top.row(align=True)
                 row2 = row.box().box()
                 row2.prop(lt, 'pairfill_options', text='Method')
+
+            row = col_top.row(align=True)
+            row.operator("paul.loop_reduce", text='Loop reduce')
+            row.prop(lt, "disp_loopreduce", text='', icon='DOWNARROW_HLT' \
+                if lt.disp_loopreduce else 'RIGHTARROW')
+            if lt.disp_loopreduce:
+                row = col_top.row(align=True)
+                row2 = row.box().box()
+                row2.prop(lt, 'loopreduce_step', text='Step')
 
         def _MISC():
             pass
@@ -7701,8 +7703,8 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.operator("uv.scaler", text='UV Scaler')
 
-        split = col.split()
-        split.operator("script.paul_update_addon", text='Auto update')
+        # split = col.split()
+        # split.operator("script.paul_update_addon", text='Auto update')
 
 
 class D1_fedge(bpy.types.Operator):
