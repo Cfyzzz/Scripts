@@ -55,11 +55,12 @@
 # 0-9-12(09.05.2018) Added (TestZone: NJoin)
 # 0-9-13(15.05.2018) Fix (TestZone: NJoin) active negative
 # 0-9-14(17.05.2018) Move Panels: LoopResolve and LoopReduce, Remove button AutoUpdate, New format Name Panel with version
+# 0-9-15(17.05.2018) Fix (TestZone: Instance Resizer) removed the reaction to a negative scale
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 14),
+    "version": (0, 9, 15),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -6867,7 +6868,7 @@ class LayoutSSPanel(bpy.types.Panel):
         projects = ['XY', 'XZ', 'YZ', 'XYZ']
         return [tuple(3 * [proj]) for proj in projects]
 
-    bl_label = "1D_Scripts %d.%d.%d"%bl_info["version"]
+    bl_label = "1D_Scripts %d.%d.%d" % bl_info["version"]
     bl_idname = "Paul_Operator"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -9994,15 +9995,13 @@ class PaInstanceResizer(bpy.types.Operator):
 
         for ins_objs in instances_objs:
             dim = []
-            scale = []
             for obj in ins_objs:
                 obj.select = True
-                scale.append(obj.scale.copy())
                 dim.append(obj.dimensions.copy())
 
             context.scene.objects.active = None
             for obj in context.selected_objects:
-                if obj.scale[0] > 0 and obj.scale[1] > 0 and obj.scale[2] > 0:
+                if all(map(lambda x: x > 0, obj.scale)):
                     context.scene.objects.active = obj
                     break
             else:
@@ -10018,12 +10017,6 @@ class PaInstanceResizer(bpy.types.Operator):
 
             for j, o in enumerate(ins_objs):
                 o.dimensions = dim[j]
-                if scale[j][0] < 0:
-                    o.scale[0] *= -1
-                if scale[j][1] < 0:
-                    o.scale[1] *= -1
-                if scale[j][2] < 0:
-                    o.scale[2] *= -1
 
             one_obj.append(context.active_object)
             bpy.ops.object.select_all(action='DESELECT')
