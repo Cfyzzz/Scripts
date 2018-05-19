@@ -56,11 +56,12 @@
 # 0-9-13(15.05.2018) Fix (TestZone: NJoin) active negative
 # 0-9-14(17.05.2018) Move Panels: LoopResolve and LoopReduce, Remove button AutoUpdate, New format Name Panel with version
 # 0-9-15(17.05.2018) Fix (TestZone: Instance Resizer) removed the reaction to a negative scale
+# 0-9-16(19.05.2018) Fix (TestZone: Instance Resizer) correct scaling of instances
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 15),
+    "version": (0, 9, 16),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -9995,9 +9996,11 @@ class PaInstanceResizer(bpy.types.Operator):
 
         for ins_objs in instances_objs:
             dim = []
+            o_scale = []
             for obj in ins_objs:
                 obj.select = True
-                dim.append(obj.dimensions.copy())
+                dim.append(obj.dimensions[:])
+                o_scale.append([1 if x > 0 else -1 for x in obj.scale[:]])
 
             context.scene.objects.active = None
             for obj in context.selected_objects:
@@ -10007,6 +10010,8 @@ class PaInstanceResizer(bpy.types.Operator):
             else:
                 context.scene.objects.active = context.selected_objects[0]
 
+            act_scale = context.scene.objects.active.scale[:]
+            scale = [1 if x > 0 else -1 for x in act_scale]
             bpy.ops.object.make_single_user(object=True, obdata=True)
             bpy.ops.object.transform_apply(scale=True)
             bpy.ops.object.mode_set(mode='EDIT')
@@ -10017,6 +10022,7 @@ class PaInstanceResizer(bpy.types.Operator):
 
             for j, o in enumerate(ins_objs):
                 o.dimensions = dim[j]
+                o.scale = [x*ka*ko for x, ka, ko in zip(o.scale, scale, o_scale[j])]
 
             one_obj.append(context.active_object)
             bpy.ops.object.select_all(action='DESELECT')
