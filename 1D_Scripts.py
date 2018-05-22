@@ -57,11 +57,12 @@
 # 0-9-14(17.05.2018) Move Panels: LoopResolve and LoopReduce, Remove button AutoUpdate, New format Name Panel with version
 # 0-9-15(17.05.2018) Fix (TestZone: Instance Resizer) removed the reaction to a negative scale
 # 0-9-16(19.05.2018) Fix (TestZone: Instance Resizer) correct scaling of instances
+# 0-9-17(22.05.2018) Change (Multiple obj import) new func [By layers]: Import sorted by name objects to layers
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 16),
+    "version": (0, 9, 17),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7230,11 +7231,13 @@ class LayoutSSPanel(bpy.types.Panel):
         else:
             split.prop(lt, "disp_obj", text="", icon='RIGHTARROW')
 
-        op_obj = split.operator("import_scene.multiple_objs", text='Multiple obj import')
+        split.operator("import_scene.multiple_objs", text='Multiple obj import')
         if lt.disp_obj:
             box = col.column(align=True).box().column()
             layout = box.column(align=True)
 
+            row = layout.row(align=True)
+            row.prop(lt, "by_layers_setting")
             row = layout.row(align=True)
             row.prop(lt, "ngons_setting")
             row = layout.row(align=True)
@@ -10788,6 +10791,11 @@ class paul_managerProps(bpy.types.PropertyGroup):
 
     # List of operator properties, the attributes will be assigned
     # to the class instance from the operator settings before calling.
+    by_layers_setting = BoolProperty(
+        name="By layers",
+        description="Import sorted by name objects to layers: 1,2,3, ... , 20",
+        default=False,
+    )
     ngons_setting = BoolProperty(
         name="NGons",
         description="Import faces with more than 4 verts as ngons",
@@ -11156,13 +11164,26 @@ class ImportMultipleObjs(bpy.types.Operator, ImportHelper):
     files = CollectionProperty(type=bpy.types.PropertyGroup)
 
     def execute(self, context):
+        def get_filename(file):
+            return file.name
+
         config = bpy.context.window_manager.paul_manager
 
         # get the folder
         folder = (os.path.dirname(self.filepath))
 
+        if config.by_layers_setting:
+            sort_files = sorted(self.files, key = get_filename)
+        else:
+            sort_files = self.files
+
         # iterate through the selected files
-        for i in self.files:
+        for idx, i in enumerate(sort_files):
+            if config.by_layers_setting:
+                layers = [False] * 20
+                layers[min(19, idx)] = True
+                bpy.context.scene.layers = layers
+
             # generate full path to file
             path_to_file = (os.path.join(folder, i.name))
 
@@ -11178,7 +11199,6 @@ class ImportMultipleObjs(bpy.types.Operator, ImportHelper):
                                      use_image_search=config.image_search_setting,
                                      split_mode=config.split_mode_setting,
                                      global_clamp_size=config.clamp_size_setting)
-
         return {'FINISHED'}
 
 
