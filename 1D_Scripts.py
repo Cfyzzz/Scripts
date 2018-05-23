@@ -58,11 +58,12 @@
 # 0-9-15(17.05.2018) Fix (TestZone: Instance Resizer) removed the reaction to a negative scale
 # 0-9-16(19.05.2018) Fix (TestZone: Instance Resizer) correct scaling of instances
 # 0-9-17(22.05.2018) Change (Multiple obj import) new func [By layers]: Import sorted by name objects to layers
+# 0-9-18(23.05.2018) Change (Multiple obj import) new func [By layers]: Import into layers from the first selected
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 17),
+    "version": (0, 9, 18),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -11172,8 +11173,11 @@ class ImportMultipleObjs(bpy.types.Operator, ImportHelper):
         # get the folder
         folder = (os.path.dirname(self.filepath))
 
+        first_layer_idx = 0
         if config.by_layers_setting:
             sort_files = sorted(self.files, key = get_filename)
+            layers_context = list(bpy.context.scene.layers[:])
+            first_layer_idx = layers_context.index(True)
         else:
             sort_files = self.files
 
@@ -11181,7 +11185,9 @@ class ImportMultipleObjs(bpy.types.Operator, ImportHelper):
         for idx, i in enumerate(sort_files):
             if config.by_layers_setting:
                 layers = [False] * 20
-                layers[min(19, idx)] = True
+                idx_layer = min(19, idx + first_layer_idx)
+                layers[idx_layer] = True
+                layers_context[idx_layer] = True
                 bpy.context.scene.layers = layers
 
             # generate full path to file
@@ -11199,6 +11205,8 @@ class ImportMultipleObjs(bpy.types.Operator, ImportHelper):
                                      use_image_search=config.image_search_setting,
                                      split_mode=config.split_mode_setting,
                                      global_clamp_size=config.clamp_size_setting)
+        if config.by_layers_setting:
+            bpy.context.scene.layers = layers_context
         return {'FINISHED'}
 
 
