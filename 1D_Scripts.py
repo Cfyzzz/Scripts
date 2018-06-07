@@ -59,11 +59,12 @@
 # 0-9-16(19.05.2018) Fix (TestZone: Instance Resizer) correct scaling of instances
 # 0-9-17(22.05.2018) Change (Multiple obj import) new func [By layers]: Import sorted by name objects to layers
 # 0-9-18(23.05.2018) Change (Multiple obj import) new func [By layers]: Import into layers from the first selected
+# 0-9-19(07.06.2018) Change (Naming/Instances = Propagate Obname) base objname > meshname >> all instances objname
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 18),
+    "version": (0, 9, 19),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -8711,11 +8712,12 @@ class PaPropagateObname(bpy.types.Operator):
             bpy.ops.paul.obname_to_meshname()
             bpy.ops.paul.select_instances()
             messages.append(context.scene['report'])
+            active_obj_name = act_obj.name
             objs = bpy.context.selected_objects
-            active_obj_name = sorted([o.name for o in objs])[0]
-            _act_obj = context.scene.objects[active_obj_name]
-            context.scene.objects.active = _act_obj
-            _act_obj.data.name = _act_obj.name
+            for solve_obj in objs:
+                solve_obj.name = active_obj_name
+
+            act_obj.name = active_obj_name
             must_select_objs.extend(objs)
             candidates_active_objs.append(active_obj_name)
 
