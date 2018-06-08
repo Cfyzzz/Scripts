@@ -60,11 +60,12 @@
 # 0-9-17(22.05.2018) Change (Multiple obj import) new func [By layers]: Import sorted by name objects to layers
 # 0-9-18(23.05.2018) Change (Multiple obj import) new func [By layers]: Import into layers from the first selected
 # 0-9-19(07.06.2018) Change (Naming/Instances = Propagate Obname) base objname > meshname >> all instances objname
+# 0-9-20(08.06.2018) Added (Corner Edges) new CornerCross and ExtendCross
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 19),
+    "version": (0, 9, 20),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -1675,6 +1676,165 @@ class NGD1_camswitch(bpy.types.Operator):
 
 
 # ------------- END --------- nikitron.cc.ua: Camswitch
+
+# ----------- BEGIN ------- Andrey Menshikov, from AM_1D_Scripts
+def crossSplit(func):
+    """decorator for splitting edges in 2D/3D"""
+
+    def run(self, context):
+
+        obj = bpy.context.object
+        me = obj.data
+        bm = bmesh.from_edit_mesh(me)
+
+        b_edges = tuple(bm.edges)
+        edges = [b_edges[e.index] for e in bm.edges if e.select]
+        if len(b_edges) < 2:
+            bpy.context.tool_settings.mesh_select_mode = True, True, True
+            return {"FINISHED"}
+
+        edges_split = [[] for e in edges]
+
+        # intersect all edges
+        for i, edge_1 in enumerate(edges):
+            for j, edge_2 in enumerate(edges[i + 1:], start=i + 1):
+
+                point = func(self, edge_1.verts[0].co, edge_1.verts[1].co, edge_2.verts[0].co, edge_2.verts[1].co,
+                             context)
+
+                if point:
+                    for position, point_data in zip((i, j), point):
+                        if 0 < point_data < 1:
+                            edges_split[position].append(point_data)
+
+        # set points
+        for edge, percents in zip(edges, edges_split):
+
+            vector = edge.verts[1].co - edge.verts[0].co
+            point = edge.verts[0].co
+
+            geom_split = bmesh.ops.bisect_edges(bm, edges=[edge], cuts=len(percents))["geom_split"]
+            vertices = [v for v in geom_split if isinstance(v, bmesh.types.BMVert)]
+            vertices.sort(key=lambda v: (point - v.co).length)
+            percents.sort()
+            for vertex, percent in zip(vertices, percents):
+                vertex.co = point + vector * percent
+
+        bmesh.update_edit_mesh(me)
+        bpy.context.tool_settings.mesh_select_mode = True, True, True
+        return {"FINISHED"}
+
+    return run
+
+
+class AMCornerCross(bpy.types.Operator):
+    """split edges in 2D projection on Z"""
+
+    bl_idname = "paul.corner_cross"
+    bl_label = "Corner Cross"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @crossSplit
+    def execute(self, v1, v2, v3, v4, context):
+        """find projection in 2D space"""
+
+        config = bpy.context.window_manager.paul_manager
+
+        v1 = mathutils.Vector((v1.x, v1.y))
+        v2 = mathutils.Vector((v2.x, v2.y))
+        v3 = mathutils.Vector((v3.x, v3.y))
+        v4 = mathutils.Vector((v4.x, v4.y))
+
+        point = mathutils.geometry.intersect_line_line_2d(v1, v2, v3, v4)
+        if point is None:
+            if config.corner_overlap:
+                return None
+            else:
+                return self.findNonOverlap((v1, v2), (v3, v4))
+
+        try:
+            percent_1 = (point - v1).length / (v2 - v1).length
+        except ZeroDivisionError:
+            percent_1 = 0
+
+        try:
+            percent_2 = (point - v3).length / (v4 - v3).length
+        except ZeroDivisionError:
+            percent_2 = 0
+
+        return percent_1, percent_2
+
+    @staticmethod
+    def findNonOverlap(line1, line2):
+        """find projection without overlap"""
+
+        xdiff = (line1[0].x - line1[1].x, line2[0].x - line2[1].x)
+        ydiff = (line1[0].y - line1[1].y, line2[0].y - line2[1].y)
+
+        def det(a, b):
+            return a[0] * b[1] - a[1] * b[0]
+
+        div = det(xdiff, ydiff)
+        if div == 0:
+            return None
+
+        d = det(*line1), det(*line2)
+        x = det(d, xdiff) / div
+        y = det(d, ydiff) / div
+
+        point = mathutils.Vector((x, y))
+        v1 = line1[1] - line1[0]
+
+        try:
+            param_1 = (point - line1[0]) * v1 / v1.length / v1.length
+        except ZeroDivisionError:
+            param_1 = 0
+
+        v2 = line2[1] - line2[0]
+        try:
+            param_2 = (point - line2[0]) * v2 / v2.length / v2.length
+        except ZeroDivisionError:
+            param_2 = 0
+
+        return param_1, param_2
+
+
+class AMExtendCross(bpy.types.Operator):
+    """split edges in 3D"""
+
+    bl_idname = "paul.extend_cross"
+    bl_label = "Extend Cross"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @crossSplit
+    def execute(self, v1, v2, v3, v4, context):
+        """find intersection in 3D"""
+
+        config = bpy.context.window_manager.paul_manager
+
+        try:
+            p1, p2 = mathutils.geometry.intersect_line_line(v1, v2, v3, v4)
+        except TypeError:
+            return None
+
+        vector_1 = v2 - v1
+        try:
+            percent_1 = (p1 - v1) * vector_1 / vector_1.length / vector_1.length
+        except ZeroDivisionError:
+            percent_1 = 0
+
+        vector_2 = v4 - v3
+        try:
+            percent_2 = (p2 - v3) * vector_2 / vector_2.length / vector_2.length
+        except ZeroDivisionError:
+            percent_2 = 0
+
+        if config.corner_overlap and not (0 < percent_1 < 1 and 0 < percent_2 < 1):
+            return None
+        return percent_1, percent_2
+
+
+# ----------- END ------- Andrey Menshikov, from AM_1D_Scripts
 
 
 def find_index_of_selected_vertex(mesh):
@@ -7303,6 +7463,11 @@ class LayoutSSPanel(bpy.types.Panel):
                 lt.to_corner_active_edge = False
             row.prop(lt, "to_corner_active_edge", text='To active edge')
 
+            col_in = layout.column(align=True)
+            col_in.operator(AMCornerCross.bl_idname, text="Extend cross")
+            col_in.operator(AMExtendCross.bl_idname, text="Corner cross")
+            col_in.prop(lt, "corner_overlap", text="Overlap")
+
         if context.mode == 'EDIT_MESH':
             split = col.split()
             if lt.disp_distverts:
@@ -10777,6 +10942,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     fedge_WRONG_AREA = bpy.props.FloatProperty(name="WRONG_AREA", default=0.02, precision=2)
     corner_active_edge = BoolProperty(name='coner_active_edge', default=False)
     to_corner_active_edge = BoolProperty(name='to_coner_active_edge', default=False)
+    corner_overlap = BoolProperty(name='corner_overlap', default=False)
     active_length_ratio = BoolProperty(name='active_length_ratio', default=False)
     verts_activate = BoolProperty(name='verts_activate', default=False)
 
@@ -11254,7 +11420,7 @@ classes = [eap_op0, eap_op1, eap_op2, eap_op3, ChunksOperator, f_op0, \
            PaBarcCursorOperator, PaSideShiftStoreDist, PaSideShiftActiveCursor, \
            PaSideShiftBackward, PaSideShiftForward, PaPropagateObname, SUV_OT_spreads, \
            PaMakeBorder, UvScalerOperator, PaRCS, NATimeLineRenderStart, NGD1_camswitch, PaInstanceResizer, \
-           PaNJoin]
+           PaNJoin, AMCornerCross, AMExtendCross]
 
 addon_keymaps = []
 
