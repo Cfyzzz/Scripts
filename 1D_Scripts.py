@@ -61,11 +61,12 @@
 # 0-9-18(23.05.2018) Change (Multiple obj import) new func [By layers]: Import into layers from the first selected
 # 0-9-19(07.06.2018) Change (Naming/Instances = Propagate Obname) base objname > meshname >> all instances objname
 # 0-9-20(08.06.2018) Added (Corner Edges) new CornerCross and ExtendCross
+# 0-9-21(08.06.2018) Change (Blendup Cleanup = Verts project) save face after split
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 20),
+    "version": (0, 9, 21),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -10523,6 +10524,7 @@ class PaVertsProjectOnEdge(bpy.types.Operator):
 
     def execute(self, context):
         config = bpy.context.window_manager.paul_manager
+
         edit_mode_out()
         edit_mode_in()
 
@@ -10540,9 +10542,7 @@ class PaVertsProjectOnEdge(bpy.types.Operator):
 
         obj = bpy.context.active_object
         mesh = obj.data
-
-        bm = bmesh.new()
-        bm.from_mesh(mesh)
+        bm = bmesh.from_edit_mesh(mesh)
         check_lukap(bm)
 
         act_edge_idx = bm_edge_first_get(bm)
@@ -10562,31 +10562,20 @@ class PaVertsProjectOnEdge(bpy.types.Operator):
             point1, dist1 = intersect_point_line(v1, pl1, pl2)
             point2, dist2 = intersect_point_line(v2, pl1, pl2)
 
-            if dist1 > 0 and dist1 < 1 and point1 not in points:
+            if 1 > dist1 > 0  and point1 not in points:
                 points.append((point1, point1 - pl1))
-            if dist2 > 0 and dist2 < 1 and point2 not in points:
+            if 1 > dist2 > 0  and point2 not in points:
                 points.append((point2, point2 - pl1))
 
         points_sort = sorted(points, key=itemgetter(1))
-        v0 = act_edge.verts[0]
-        v1 = act_edge.verts[1]
-        for point_ in points_sort:
-            p = point_[0]
-            new_vert = bm.verts.new(p)
-            new_edge = bm.edges.new([v0, new_vert])
-            v0 = new_vert
+        geom_split = bmesh.ops.bisect_edges(bm, edges=[act_edge], cuts=len(points_sort))["geom_split"]
+        vertices = [v for v in geom_split if isinstance(v, bmesh.types.BMVert)]
+        vertices.sort(key=lambda v: (pl1 - v.co).length)
+        for idx, vert in enumerate(vertices):
+            point = points_sort[idx][0]
+            vert.co = point
 
-        if points_sort:
-            new_edge = bm.edges.new([v0, v1])
-            bm.edges.remove(act_edge)
-            bpy.ops.object.editmode_toggle()
-            bm.to_mesh(mesh)
-            mesh.update()
-
-            edit_mode_in()
-            bpy.ops.mesh.select_all(action='DESELECT')
-            # bpy.ops.mesh.select_mode(type='VERT')
-
+        bmesh.update_edit_mesh(mesh)
         bm.free()
 
         return {'FINISHED'}
