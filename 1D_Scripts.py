@@ -62,11 +62,12 @@
 # 0-9-19(07.06.2018) Change (Naming/Instances = Propagate Obname) base objname > meshname >> all instances objname
 # 0-9-20(08.06.2018) Added (Corner Edges) new CornerCross and ExtendCross
 # 0-9-21(08.06.2018) Change (Blendup Cleanup = Verts project) save face after split
+# 0-9-22(10.06.2018) Change (TestZone: Instance Resizer) scale apply to independent objects
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 21),
+    "version": (0, 9, 22),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -10150,6 +10151,7 @@ class PaInstanceResizer(bpy.types.Operator):
         instances_objs = []
         sel_objs = context.selected_objects
         one_obj = []
+        independent_objs = []
 
         bpy.ops.object.select_all(action='DESELECT')
 
@@ -10164,6 +10166,14 @@ class PaInstanceResizer(bpy.types.Operator):
                 instances_objs.append(sel_inst_objs)
                 for obj in sel_inst_objs:
                     names.append(obj.name)
+            else:
+                independent_objs.append(i)
+            bpy.ops.object.select_all(action='DESELECT')
+
+        for ind_obj in independent_objs:
+            ind_obj.select = True
+        if independent_objs:
+            bpy.ops.object.transform_apply(scale=True)
             bpy.ops.object.select_all(action='DESELECT')
 
         for ins_objs in instances_objs:
