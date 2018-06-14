@@ -64,11 +64,12 @@
 # 0-9-21(08.06.2018) Change (Blendup Cleanup = Verts project) save face after split
 # 0-9-22(10.06.2018) Change (TestZone: Instance Resizer) scale apply to independent objects
 # 0-9-23(14.06.2018) Fix (Blendup Cleanup = Verts project) Blender crashed after it and use f2
+# 0-9-24(15.06.2018) Added (TestZone = Volume Select)
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 23),
+    "version": (0, 9, 24),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7843,6 +7844,15 @@ class LayoutSSPanel(bpy.types.Panel):
             box = col.column(align=True).box().column()
             col_top = box.column(align=True)
             row = col_top.row(align=True)
+            row.operator(PaVolumeSelect.bl_idname, text='Volume Select')
+            row.prop(lt, "disp_valsel", text='', icon='DOWNARROW_HLT' \
+                if lt.disp_valsel else 'RIGHTARROW')
+            if lt.disp_valsel:
+                row = col_top.row(align=True)
+                row2 = row.box().box()
+                row2.prop(lt, 'valsel_objectmode', text='Object mode')
+
+            row = col_top.row(align=True)
             row.operator(PaNJoin.bl_idname, text='Negative Join')
 
             row = col_top.row(align=True)
@@ -10520,6 +10530,49 @@ class PaCleanGlass(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class PaVolumeSelect(bpy.types.Operator):
+    bl_idname = "paul.valume_select"
+    bl_label = "Valume select"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and \
+               context.active_object.type == 'MESH'
+
+    def execute(self, context):
+        def is_inside(p, obj):
+            # max_dist = 1.84467e+19
+            is_true, point, normal, face = obj.closest_point_on_mesh(p)
+            p2 = point - p
+            v = p2.dot(normal)
+            return not (v < 0.0)
+
+        config = context.window_manager.paul_manager
+
+        edit_mode_out()
+        act_obj = context.active_object
+        mesh = act_obj.data
+        sel_objs = context.selected_objects[:]
+
+        if config.valsel_objectmode:
+            bpy.ops.object.select_all(action='DESELECT')
+            for obj in sel_objs:
+                obj.select = is_inside(obj.location, act_obj)
+            act_obj.select = True
+        else:
+            edit_mode_in()
+            bpy.ops.mesh.select_all(action="DESELECT")
+            bm = bmesh.from_edit_mesh(mesh)
+            for obj in sel_objs:
+                if obj == act_obj or obj.type != 'MESH':
+                    continue
+
+                for v in bm.verts:
+                    p = act_obj.matrix_world * v.co
+                    if is_inside(p, obj):
+                        v.select = True
+        return {'FINISHED'}
 
 class PaVertsProjectOnEdge(bpy.types.Operator):
     r"""Проекция вершин выделенных ребер на первое или активное ребро"""
@@ -10915,6 +10968,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_mborder = bpy.props.BoolProperty(name='disp_mborder', default=False)
     disp_batch = bpy.props.BoolProperty(name='disp_batch', default=False)
     disp_render = bpy.props.BoolProperty(name='disp_render', default=False)
+    disp_valsel = bpy.props.BoolProperty(name='disp_valsel', default=False)
 
     mborder_size = FloatProperty(name="mborder_size", default=0.1, precision=1, max=100, min=-100)
 
@@ -10945,6 +10999,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     corner_overlap = BoolProperty(name='corner_overlap', default=False)
     active_length_ratio = BoolProperty(name='active_length_ratio', default=False)
     verts_activate = BoolProperty(name='verts_activate', default=False)
+    valsel_objectmode = BoolProperty(name='valsel_objectmode', default=False)
 
     chunks_clamp = bpy.props.IntProperty(name="chunks_clamp", default=1, \
                                          min=1, max=100, step=1, subtype='FACTOR')
@@ -11420,7 +11475,7 @@ classes = [eap_op0, eap_op1, eap_op2, eap_op3, ChunksOperator, f_op0, \
            PaBarcCursorOperator, PaSideShiftStoreDist, PaSideShiftActiveCursor, \
            PaSideShiftBackward, PaSideShiftForward, PaPropagateObname, SUV_OT_spreads, \
            PaMakeBorder, UvScalerOperator, PaRCS, NATimeLineRenderStart, NGD1_camswitch, PaInstanceResizer, \
-           PaNJoin, AMCornerCross, AMExtendCross]
+           PaNJoin, AMCornerCross, AMExtendCross, PaVolumeSelect]
 
 addon_keymaps = []
 
