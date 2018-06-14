@@ -65,11 +65,12 @@
 # 0-9-22(10.06.2018) Change (TestZone: Instance Resizer) scale apply to independent objects
 # 0-9-23(14.06.2018) Fix (Blendup Cleanup = Verts project) Blender crashed after it and use f2
 # 0-9-24(15.06.2018) Added (TestZone = Volume Select)
+# 0-9-25(15.06.2018) Fix (TestZone = Volume Select)
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 24),
+    "version": (0, 9, 25),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -10552,7 +10553,6 @@ class PaVolumeSelect(bpy.types.Operator):
 
         edit_mode_out()
         act_obj = context.active_object
-        mesh = act_obj.data
         sel_objs = context.selected_objects[:]
 
         if config.valsel_objectmode:
@@ -10561,17 +10561,25 @@ class PaVolumeSelect(bpy.types.Operator):
                 obj.select = is_inside(obj.location, act_obj)
             act_obj.select = True
         else:
-            edit_mode_in()
-            bpy.ops.mesh.select_all(action="DESELECT")
-            bm = bmesh.from_edit_mesh(mesh)
             for obj in sel_objs:
                 if obj == act_obj or obj.type != 'MESH':
                     continue
 
+                context.scene.objects.active = obj
+                mesh = obj.data
+                edit_mode_in()
+                bpy.ops.mesh.select_all(action="DESELECT")
+                bm = bmesh.from_edit_mesh(mesh)
+                flag = False
                 for v in bm.verts:
-                    p = act_obj.matrix_world * v.co
-                    if is_inside(p, obj):
-                        v.select = True
+                    p = obj.matrix_world * v.co
+                    v.select = is_inside(p, act_obj)
+                    if v.select:
+                        flag = True
+                edit_mode_out()
+                obj.select = flag
+
+            context.scene.objects.active = act_obj
         return {'FINISHED'}
 
 class PaVertsProjectOnEdge(bpy.types.Operator):
