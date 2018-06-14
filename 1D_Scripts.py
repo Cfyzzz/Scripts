@@ -66,11 +66,12 @@
 # 0-9-23(14.06.2018) Fix (Blendup Cleanup = Verts project) Blender crashed after it and use f2
 # 0-9-24(15.06.2018) Added (TestZone = Volume Select)
 # 0-9-25(15.06.2018) Fix (TestZone = Volume Select)
+# 0-9-26(15.06.2018) Fix (TestZone = Volume Select) add icon for modes
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 25),
+    "version": (0, 9, 26),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7846,12 +7847,8 @@ class LayoutSSPanel(bpy.types.Panel):
             col_top = box.column(align=True)
             row = col_top.row(align=True)
             row.operator(PaVolumeSelect.bl_idname, text='Volume Select')
-            row.prop(lt, "disp_valsel", text='', icon='DOWNARROW_HLT' \
-                if lt.disp_valsel else 'RIGHTARROW')
-            if lt.disp_valsel:
-                row = col_top.row(align=True)
-                row2 = row.box().box()
-                row2.prop(lt, 'valsel_objectmode', text='Object mode')
+            row.prop(lt, "valsel_objectmode", text='', icon='OBJECT_DATAMODE' \
+                if lt.valsel_objectmode else 'EDITMODE_HLT')
 
             row = col_top.row(align=True)
             row.operator(PaNJoin.bl_idname, text='Negative Join')
@@ -10976,7 +10973,6 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_mborder = bpy.props.BoolProperty(name='disp_mborder', default=False)
     disp_batch = bpy.props.BoolProperty(name='disp_batch', default=False)
     disp_render = bpy.props.BoolProperty(name='disp_render', default=False)
-    disp_valsel = bpy.props.BoolProperty(name='disp_valsel', default=False)
 
     mborder_size = FloatProperty(name="mborder_size", default=0.1, precision=1, max=100, min=-100)
 
