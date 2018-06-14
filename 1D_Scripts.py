@@ -63,11 +63,12 @@
 # 0-9-20(08.06.2018) Added (Corner Edges) new CornerCross and ExtendCross
 # 0-9-21(08.06.2018) Change (Blendup Cleanup = Verts project) save face after split
 # 0-9-22(10.06.2018) Change (TestZone: Instance Resizer) scale apply to independent objects
+# 0-9-23(14.06.2018) Fix (Blendup Cleanup = Verts project) Blender crashed after it and use f2
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 22),
+    "version": (0, 9, 23),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -10586,7 +10587,7 @@ class PaVertsProjectOnEdge(bpy.types.Operator):
             vert.co = point
 
         bmesh.update_edit_mesh(mesh)
-        bm.free()
+        mesh.update()
 
         return {'FINISHED'}
 
