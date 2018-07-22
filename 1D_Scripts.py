@@ -67,11 +67,12 @@
 # 0-9-24(15.06.2018) Added (TestZone = Volume Select)
 # 0-9-25(15.06.2018) Fix (TestZone = Volume Select)
 # 0-9-26(15.06.2018) Fix (TestZone = Volume Select) add icon for modes
+# 0-9-27(23.07.2018) Added (TestZone) Batch Remover
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 26),
+    "version": (0, 9, 27),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -96,7 +97,7 @@ from bpy_extras.io_utils import ExportHelper, ImportHelper
 from bpy.types import Operator
 import time
 from collections import namedtuple
-from operator import mul, itemgetter, add
+from operator import mul, itemgetter, add, attrgetter
 from functools import reduce
 from abc import abstractmethod, ABCMeta
 
@@ -1189,6 +1190,436 @@ class BTDropInstancesOperator(bpy.types.Operator):
             duplicated.matrix_local = m
 
         return {'FINISHED'}
+
+
+# __author__ = 'Aleksey Nakoryakov'
+
+
+class BTBatchRemoverMixin(BTBatchOperatorMixin):
+    """
+    Base mixin for batch processing objects
+    Inheritors must override:
+        filter_object method to define what objects to process
+        process_object method to define what to do with each object
+    """
+    class OPERATOR_TYPE_ENUM:
+        do_select = 'DO_SELECT'
+        do_remove = 'DO_REMOVE'
+
+    operator_type = bpy.props.EnumProperty(items=((OPERATOR_TYPE_ENUM.do_remove, )*3,
+                                                  (OPERATOR_TYPE_ENUM.do_select, )*3),
+                                           options={'HIDDEN'})
+
+    @classmethod
+    def poll(cls, context):
+        return (context.selected_objects or
+                context.scene.batch_operator_settings.work_without_selection)
+
+    def get_use_selected_objects(self):
+        return not self.context.scene.batch_operator_settings.work_without_selection
+
+    def pre_filter_objects(self):
+        self.count = 0
+        if self.get_use_selected_objects():
+            drop_selection(self.context.scene)
+
+    def process_object(self, obj):
+        self.count += 1
+        if self.operator_type == self.OPERATOR_TYPE_ENUM.do_remove:
+            self.do_remove(obj)
+        obj.select = True  # All you need is love!
+
+    def post_process_objects(self):
+        message = '{} {} properties'.format(
+            'Removed' if self.operator_type == self.OPERATOR_TYPE_ENUM.do_remove else 'Selected',
+            self.count
+        )
+        self.report({'INFO'}, message)
+
+    def do_remove(self, obj):
+        raise NotImplementedError
+
+
+class BTBatchUVMapsEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.uvmaps_eraser'
+    bl_label = 'UV Maps Batch Remove'
+    bl_description = 'Removes UV Maps from selected or all objects in scene'
+    dropdown_name = 'UV Maps'
+
+    def filter_object(self, obj):
+        """ We need to remove uv_textures. So we need objects with them """
+        # I didn't see blender yet, so I don't know what objects have textures
+        # so just find them
+        return hasattr(obj.data, 'uv_textures') and obj.data.uv_textures
+
+    def do_remove(self, obj):
+        count = 0
+        while obj.data.uv_textures:
+            bpy.ops.mesh.uv_texture_remove()
+            count += 1
+        return count
+
+
+class BTBatchVertexGroupEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.vertex_groups_eraser'
+    bl_label = 'Vertex Groups Batch Remove'
+    bl_description = 'Removes Vertex Groups from '\
+                     'selected or all objects in scene'
+    dropdown_name = 'Vertex Groups'
+
+    def filter_object(self, obj):
+        has_groups = (hasattr(obj, 'vertex_groups') and
+                      obj.vertex_groups)
+        return has_groups
+
+    def do_remove(self, obj):
+        bpy.ops.object.vertex_group_remove(all=True)
+        # We try to count removed items, so return something
+        return 1
+
+
+class BTBatchShapeKeysEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.shape_keys_eraser'
+    bl_label = 'Shape Keys Batch Remove'
+    bl_description = 'Removes Shape Keys from selected or all objects in scene'
+    dropdown_name = 'Shape Keys'
+
+    def filter_object(self, obj):
+        has_keys = hasattr(obj.data, 'shape_keys') and obj.data.shape_keys
+        return True if has_keys else False
+
+    def do_remove(self, obj):
+        bpy.ops.object.shape_key_remove(all=True)
+        # We try to count removed items, so return something
+        return 1
+
+
+class BTBatchVertexColorsEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.vertex_colors_eraser'
+    bl_label = 'Vertex Colors Batch Remove'
+    bl_description = 'Removes VCols from selected or all objects in scene'
+    dropdown_name = 'Vertex Colors'
+
+    def filter_object(self, obj):
+        has_colors = (hasattr(obj.data, 'vertex_colors') and
+                      obj.data.vertex_colors)
+        return True if has_colors else False
+
+    def do_remove(self, obj):
+        count = 0
+        while obj.data.vertex_colors:
+            for color in obj.data.vertex_colors:
+                # Have to make vcolor active to remove it
+                color.active = True
+                bpy.ops.mesh.vertex_color_remove()
+                # count is wrong because there is no guarantee that
+                # vertex_color_remove tries to our active color
+                count += 1
+        return count
+
+
+class BTBatchMaterialEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.materials_eraser'
+    bl_label = 'Materials Batch Remove'
+    bl_description = 'Removes Materials from selected or all objects in scene'
+    dropdown_name = 'Materials'
+
+    def filter_object(self, obj):
+        has_materials = hasattr(obj.data, 'materials') and obj.data.materials
+        return True if has_materials else False
+
+    def do_remove(self, obj):
+        count = 0
+        while obj.data.materials:
+            bpy.ops.object.material_slot_remove()
+            count += 1
+        return count
+
+
+class BTBatchGPencilEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.gpencil_eraser'
+    bl_label = 'GPencil Batch Remove'
+    bl_description = 'Removes GPencils from selected or all objects in scene'
+    dropdown_name = 'Grease Pencil'
+
+    def filter_object(self, obj):
+        has_materials = hasattr(obj, 'grease_pencil') and obj.grease_pencil
+        return True if has_materials else False
+
+    def do_remove(self, obj):
+        count = 0
+        while obj.grease_pencil:
+            bpy.ops.gpencil.data_unlink()
+            count += 1
+        return count
+
+
+class BTAllModifiersEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.all_modifiers_eraser'
+    bl_label = 'All Modifiers Batch Remove'
+    bl_description = 'Removes All Modifiers from '\
+                     'selected or all objects in scene'
+    dropdown_name = 'All Modifiers'
+
+    def filter_object(self, obj):
+        has_modifiers = hasattr(obj, 'modifiers') and obj.modifiers
+        return True if has_modifiers else False
+
+    def do_remove(self, obj):
+        count = 0
+        for modifier in obj.modifiers:
+            bpy.ops.object.modifier_remove(modifier=modifier.name)
+            count += 1
+        return count
+
+
+class BTAllSubsurfsEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.all_subsurfs_eraser'
+    bl_label = 'All Subsurfs Batch Remove'
+    bl_description = 'Removes All Subsurfs from selected '\
+                     'or all objects in scene'
+    dropdown_name = 'All Subsurfs'
+
+    def filter_object(self, obj):
+        has_modifiers = hasattr(obj, 'modifiers')
+        if has_modifiers:
+            has_subsurfs = len([m for m in obj.modifiers if m.type == 'SUBSURF']) > 0
+            has_modifiers = has_modifiers and has_subsurfs
+        return True if has_modifiers else False
+
+    def do_remove(self, obj):
+        count = 0
+        subsurfs = [m for m in obj.modifiers if m.type == 'SUBSURF']
+        for modifier in subsurfs:
+            bpy.ops.object.modifier_remove(modifier=modifier.name)
+            count += 1
+        return count
+
+
+class BTZeroSubsurfsEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.zero_subsurfs_eraser'
+    bl_label = 'Zero Subsurfs Batch Remove'
+    bl_description = 'Removes Subsurfs with view 0 from '\
+                     'selected or all objects in scene'
+    dropdown_name = 'Zero Subsurfs'
+
+    def filter_object(self, obj):
+        has_modifiers = hasattr(obj, 'modifiers')
+        if has_modifiers:
+            has_subsurfs = len([m for m in obj.modifiers
+                                if m.type == 'SUBSURF' and m.levels == 0]) > 0
+            has_modifiers = has_modifiers and has_subsurfs
+        return True if has_modifiers else False
+
+    def do_remove(self, obj):
+        count = 0
+        subsurfs = [m for m in obj.modifiers
+                    if m.type == 'SUBSURF' and m.levels == 0]
+        for modifier in subsurfs:
+            bpy.ops.object.modifier_remove(modifier=modifier.name)
+            count += 1
+        return count
+
+
+class BTEdgeSplitRemoverOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.edge_split_remover'
+    bl_label = 'Edge Split Batch Remove/Select'
+    bl_description = 'Removes/selects Edge Splits from selected or all objects in scene'
+    dropdown_name = 'Edge Split'
+
+    def filter_object(self, obj):
+        has_modifiers = hasattr(obj, 'modifiers')
+        return has_modifiers and any([m for m in obj.modifiers if m.type == 'EDGE_SPLIT'])
+
+    def do_remove(self, obj):
+        count = 0
+        edge_splits = [m for m in obj.modifiers if m.type == 'EDGE_SPLIT']
+        for modifier in edge_splits:
+            bpy.ops.object.modifier_remove(modifier=modifier.name)
+            count += 1
+        return count
+
+
+class BTMirrorMDFRemoverOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.mirror_mdf_remover'
+    bl_label = 'Mirror modifier Batch Remove/Select'
+    bl_description = 'Removes/selects Mirror modifier from selected or all objects in scene'
+    dropdown_name = 'Mirror'
+
+    def filter_object(self, obj):
+        has_modifiers = hasattr(obj, 'modifiers')
+        return has_modifiers and any([m for m in obj.modifiers if m.type == "MIRROR"])
+
+    def do_remove(self, obj):
+        count = 0
+        mirrors = [m for m in obj.modifiers if m.type == 'MIRROR']
+        for modifier in mirrors:
+            bpy.ops.object.modifier_remove(modifier=modifier.name)
+            count += 1
+
+
+class BTMultipleUVMapsRemoverOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.multiple_uvmaps_remover'
+    bl_label = 'Multiple UV Maps Batch Remove'
+    bl_description = ('Removes all except active UV Maps from selected '
+                      'or all objects in scene')
+    dropdown_name = 'Multiple UV Maps'
+
+    def filter_object(self, obj):
+        return hasattr(obj.data, 'uv_textures') and len(obj.data.uv_textures) > 1
+
+    def do_remove(self, obj):
+        count = 0
+        textures = obj.data.uv_textures
+        textures.active_index = 0
+        for _ in range(len(textures) - 1):
+            if textures[textures.active_index].active_render:
+                textures.active_index += 1
+            bpy.ops.mesh.uv_texture_remove()
+            count += 1
+        return count
+
+
+class BTBevelModifierRemoverOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.bevel_modifier_remover'
+    bl_label = 'Bevel modifier Batch Remove'
+    bl_description = ('Removes or selects Bevel modifiers from selected '
+                      'or all objects in scene')
+    dropdown_name = 'Bevel'
+
+    modifier_type = 'BEVEL'
+
+    def filter_object(self, obj):
+        has_modifiers = hasattr(obj, 'modifiers')
+        return has_modifiers and any([m for m in obj.modifiers if m.type == self.modifier_type])
+
+    def do_remove(self, obj):
+        count = 0
+        bevels = [m for m in obj.modifiers if m.type == self.modifier_type]
+        for modifier in bevels:
+            bpy.ops.object.modifier_remove(modifier=modifier.name)
+            count += 1
+
+
+class BTEmptySlotsRemoverOperator(BTBatchRemoverMixin, bpy.types.Operator):
+    bl_idname = 'object.empty_slots_remover'
+    bl_label = 'Empty slots Batch Remove'
+    bl_description = ('Removes empty slots or selects objects with empty slots '
+                      'from selected or all objects in scene')
+    dropdown_name = 'Empty material slots'
+
+    def filter_object(self, obj):
+        slots = getattr(obj, 'material_slots')
+        return slots and any(s for s in slots if not s.material)
+
+    def do_remove(self, obj):
+        count = 0
+        for idx in self._get_empty_index(obj):
+            obj.active_material_index = idx
+            bpy.ops.object.material_slot_select()
+            bpy.ops.object.material_slot_remove()
+        return count
+
+    def _get_empty_index(self, obj):
+        yield next(idx for idx, slot in enumerate(obj.material_slots) if not slot.material)
+
+
+def create_panel_batch_remover(col, scene):
+    col.operator(scene.batch_operator_settings.removers_dropdown,
+                 text='Remove').operator_type = BTBatchRemoverMixin.OPERATOR_TYPE_ENUM.do_remove
+    col.operator(scene.batch_operator_settings.removers_dropdown,
+                 text='Select').operator_type = BTBatchRemoverMixin.OPERATOR_TYPE_ENUM.do_select
+    col.prop(scene.batch_operator_settings, 'removers_dropdown',
+             text='Action')
+    col.prop(scene.batch_operator_settings, 'work_without_selection')
+
+
+def get_description(operator):
+    """ Gets description from operator, if exists """
+    return hasattr(operator, 'bl_description') and operator.bl_description
+
+
+class BatchOperatorSettings(bpy.types.PropertyGroup):
+    work_without_selection = bpy.props.BoolProperty(
+        name='Whole scene',
+        default=False,
+        description='If set, batch erasers will '
+                    'work with all objects without selection')
+
+    # We need all subclasses of BatchRemoverMixin in one dropdown
+    operators = [
+        (op.bl_idname, op.dropdown_name, get_description(op))
+        for op in sorted(BTBatchRemoverMixin.__subclasses__(), key=attrgetter('dropdown_name'))]
+
+    removers_dropdown = bpy.props.EnumProperty(
+        items=operators,
+        name='Removers')
+
+    # TODO: Extract this and next to another class. Just for verticals
+    verticals_select_behaviour = bpy.props.EnumProperty(
+        items=[
+            ('Z All', 'All', 'Z All'),
+            ('Z Up', 'Up', 'Z Up'),
+            ('Z Down', 'Down', 'Z Down'),
+            ('Z Between', 'Between', 'Z Between'),
+            ('Z Level', 'Z Level', 'Z Level'),
+        ],
+        name='Options')
+
+    select_global_limit = bpy.props.BoolProperty(name='Global limit',
+                                                 default=True)
+
+    import_cleanup_recalculate_normals = bpy.props.BoolProperty(
+        name='Recalculate Normals', default=False)
+    import_cleanup_apply_rotations = bpy.props.BoolProperty(
+        name='Apply rotation', default=True)
+    import_cleanup_remove_doubles = bpy.props.BoolProperty(
+        name='Remove doubles', default=True)
+    import_cleanup_remove_doubles_threshold = bpy.props.FloatProperty(
+        name='threshold', default=0.001, precision=4,
+        min=0.0001, max=10
+    )
+    import_cleanup_tris_to_quads = bpy.props.BoolProperty(
+        name='Tris to quads', default=True)
+    import_cleanup_tris_to_quads_limit = bpy.props.IntProperty(
+        name='limit', default=60, min=0, max=360
+    )
+    import_cleanup_clear_custom_normals = bpy.props.BoolProperty(
+        name='Clear custom normals',
+        default=True,
+    )
+    import_cleanup_reveal_hidden = bpy.props.BoolProperty(
+        name='Reveal hidden',
+        default=True,
+    )
+    import_cleanup_fix_double_faces = bpy.props.BoolProperty(
+        name='Fix Double Faces',
+        default=False,
+    )
+    import_cleanup_triangulate = bpy.props.BoolProperty(
+        name='Triangulate',
+        default=False,
+    )
+    geometry_inbound_only = bpy.props.BoolProperty(
+        name='Inbound Only', default=True)
+
+    do_triangulate_while_union = bpy.props.BoolProperty(name='Do triangulate',
+                                                        default=True)
+
+
+class TestSettings:
+    text = None
+    slope_plane = None
+
+
+class BatchPanelSettings(bpy.types.PropertyGroup):
+    do_show_select_vertices = bpy.props.BoolProperty(default=False)
+    do_show_remover = bpy.props.BoolProperty(default=False)
+    do_show_cleanup = bpy.props.BoolProperty(default=False)
+    do_show_misc = bpy.props.BoolProperty(default=False)
+    do_show_instances_placement = bpy.props.BoolProperty(default=False)
+    do_show_naming_tools = bpy.props.BoolProperty(default=False)
+    do_show_slope_align = bpy.props.BoolProperty(default=False)
 
 
 # ----------- END --- Bargool_1D_tools
@@ -7057,8 +7488,14 @@ class LayoutSSPanel(bpy.types.Panel):
     def poll(cls, context):
         return context.active_object is not None'''
 
+    @property
+    def props(self):
+        return self.scene.batch_panel_settings
+
     def draw(self, context):
         lt = bpy.context.window_manager.paul_manager
+        scene = context.scene
+        self.scene = scene
 
         layout = self.layout
         col = layout.column(align=True)
@@ -7845,6 +8282,15 @@ class LayoutSSPanel(bpy.types.Panel):
         if lt.disp_test:
             box = col.column(align=True).box().column()
             col_top = box.column(align=True)
+
+            row = col_top.row(align=True)
+            row.prop(lt, "disp_bremover", text='Batch Remover', icon='DOWNARROW_HLT' \
+                if lt.disp_bremover else 'RIGHTARROW')
+            if lt.disp_bremover:
+                row = col_top.row(align=True)
+                row2 = row.box().box()
+                create_panel_batch_remover(col=row2, scene=scene)
+
             row = col_top.row(align=True)
             row.operator(PaVolumeSelect.bl_idname, text='Volume Select')
             row.prop(lt, "valsel_objectmode", text='', icon='OBJECT_DATAMODE' \
@@ -10973,6 +11419,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_mborder = bpy.props.BoolProperty(name='disp_mborder', default=False)
     disp_batch = bpy.props.BoolProperty(name='disp_batch', default=False)
     disp_render = bpy.props.BoolProperty(name='disp_render', default=False)
+    disp_bremover = bpy.props.BoolProperty(name='disp_bremover', default=False)
 
     mborder_size = FloatProperty(name="mborder_size", default=0.1, precision=1, max=100, min=-100)
 
@@ -11479,7 +11926,14 @@ classes = [eap_op0, eap_op1, eap_op2, eap_op3, ChunksOperator, f_op0, \
            PaBarcCursorOperator, PaSideShiftStoreDist, PaSideShiftActiveCursor, \
            PaSideShiftBackward, PaSideShiftForward, PaPropagateObname, SUV_OT_spreads, \
            PaMakeBorder, UvScalerOperator, PaRCS, NATimeLineRenderStart, NGD1_camswitch, PaInstanceResizer, \
-           PaNJoin, AMCornerCross, AMExtendCross, PaVolumeSelect]
+           PaNJoin, AMCornerCross, AMExtendCross, PaVolumeSelect, \
+           BTBatchUVMapsEraserOperator, BTBatchVertexGroupEraserOperator,
+           BTBatchShapeKeysEraserOperator, BTBatchVertexColorsEraserOperator, BTBatchMaterialEraserOperator,
+           BTBatchGPencilEraserOperator, BTAllModifiersEraserOperator, BTAllSubsurfsEraserOperator,
+           BTZeroSubsurfsEraserOperator, BTEdgeSplitRemoverOperator, BTMirrorMDFRemoverOperator,
+           BTMultipleUVMapsRemoverOperator, BTBevelModifierRemoverOperator, BTEmptySlotsRemoverOperator,
+           BatchOperatorSettings
+           ]
 
 addon_keymaps = []
 
@@ -11487,6 +11941,7 @@ addon_keymaps = []
 def register():
     for c in classes:
         bpy.utils.register_class(c)
+
     bpy.types.WindowManager.paul_manager = \
         bpy.props.PointerProperty(type=paul_managerProps)
     bpy.context.window_manager.paul_manager.display = False
@@ -11521,6 +11976,9 @@ def register():
     bpy.context.window_manager.paul_manager.ovr_count = 10
     bpy.context.window_manager.paul_manager.afas_angle = 0.2
 
+    bpy.types.Scene.batch_operator_settings = \
+        bpy.props.PointerProperty(type=BatchOperatorSettings)
+
     wm = bpy.context.window_manager
     km = wm.keyconfigs.addon.keymaps.new(name='offset', space_type='VIEW_3D')
     kmi = km.keymap_items.new(OffsetOperator.bl_idname, 'R', 'PRESS', ctrl=False, shift=True)
@@ -11531,6 +11989,9 @@ def unregister():
     for km, kmi in addon_keymaps:
         km.keymap_items.remove(kmi)
     addon_keymaps.clear()
+
+    if hasattr(bpy.types.Scene, 'batch_operator_settings'):
+        del bpy.types.Scene.batch_operator_settings
 
     del bpy.types.WindowManager.paul_manager
     classes.reverse()
