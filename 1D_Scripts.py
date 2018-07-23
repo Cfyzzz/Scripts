@@ -68,11 +68,12 @@
 # 0-9-25(15.06.2018) Fix (TestZone = Volume Select)
 # 0-9-26(15.06.2018) Fix (TestZone = Volume Select) add icon for modes
 # 0-9-27(23.07.2018) Added (TestZone) Batch Remover
+# 0-9-28(23.07.2018) Move Panel: Batch Remover
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 27),
+    "version": (0, 9, 28),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7774,6 +7775,16 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.operator("mesh.projectloop", text='Project 3DLoop')
 
+        split = col.split()
+        if lt.disp_bremover:
+            split.prop(lt, "disp_bremover", text="Batch Remover", icon='DOWNARROW_HLT')
+        else:
+            split.prop(lt, "disp_bremover", text="Batch Remover", icon='RIGHTARROW')
+        if lt.disp_bremover:
+            box = col.column(align=True).box().column()
+            col_top = box.column(align=False)
+            create_panel_batch_remover(col=col_top, scene=scene)
+
         split = col.split(percentage=0.15)
         if lt.disp_barc:
             split.prop(lt, "disp_barc", text="", icon='DOWNARROW_HLT')
@@ -8282,14 +8293,6 @@ class LayoutSSPanel(bpy.types.Panel):
         if lt.disp_test:
             box = col.column(align=True).box().column()
             col_top = box.column(align=True)
-
-            row = col_top.row(align=True)
-            row.prop(lt, "disp_bremover", text='Batch Remover', icon='DOWNARROW_HLT' \
-                if lt.disp_bremover else 'RIGHTARROW')
-            if lt.disp_bremover:
-                row = col_top.row(align=True)
-                row2 = row.box().box()
-                create_panel_batch_remover(col=row2, scene=scene)
 
             row = col_top.row(align=True)
             row.operator(PaVolumeSelect.bl_idname, text='Volume Select')
