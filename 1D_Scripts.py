@@ -69,11 +69,13 @@
 # 0-9-26(15.06.2018) Fix (TestZone = Volume Select) add icon for modes
 # 0-9-27(23.07.2018) Added (TestZone) Batch Remover
 # 0-9-28(23.07.2018) Move Panel: Batch Remover
+# 0-9-29(03.09.2018) Render(UI): Add Shortcut
+
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 28),
+    "version": (0, 9, 29),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -2078,8 +2080,9 @@ class NGD1_camswitch(bpy.types.Operator):
     Следующая и предыдущая камера в сцене.
     next & previous camera in ther scene.
     """
-    bl_idname = "paul.camswitch"
+    bl_idname = "scene.camswitch"
     bl_label = "Camswitch D1"
+    bl_options = {'REGISTER', 'UNDO'}
 
     next = bpy.props.BoolProperty(name='next', default=True)
 
@@ -7978,8 +7981,8 @@ class LayoutSSPanel(bpy.types.Panel):
             col_render = box.column(align=True)
 
             row = col_render.row(align=True)
-            row.operator('paul.camswitch', text='Prev', icon='TRIA_LEFT').next = False
-            row.operator('paul.camswitch', text='Next', icon='TRIA_RIGHT').next = True
+            row.operator('scene.camswitch', text='Prev', icon='TRIA_LEFT').next = False
+            row.operator('scene.camswitch', text='Next', icon='TRIA_RIGHT').next = True
 
             col_top = box.column(align=True)
 
