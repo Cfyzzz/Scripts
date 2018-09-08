@@ -70,12 +70,13 @@
 # 0-9-27(23.07.2018) Added (TestZone) Batch Remover
 # 0-9-28(23.07.2018) Move Panel: Batch Remover
 # 0-9-29(03.09.2018) Render(UI): Add Shortcut
+# 0-9-30(08.09.2018) Change (Instances ++ replace) add: Use translation
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 29),
+    "version": (0, 9, 30),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -8261,6 +8262,13 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("paul.obname_mat", text='Obname materials')
             row = col_top.row(align=True)
             row.operator("paul.instances_meshname_replace", text='Instances ++ replace')
+            row.prop(lt, "disp_inst_repl", text='', icon='DOWNARROW_HLT' if lt.disp_inst_repl else 'RIGHTARROW')
+            if lt.disp_inst_repl:
+                row = col_top.row(align=True)
+                col2 = row.box().box().column()
+                col2.prop(lt, 'inst_repl_use_translation', text='Use translation')
+                col2.prop(lt, 'inst_repl_from', text='From')
+                col2.prop(lt, 'inst_repl_to', text='To')
             row = col_top.row(align=True)
             row.operator("paul.instances_sel_unique", text='Instances select unique')
             row = col_top.row(align=True)
@@ -10522,6 +10530,43 @@ class PaInstancesMeshnameReplacePP(bpy.types.Operator):
             bpy.ops.object.make_links_data(type='OBDATA')
             obj_source.select = True
 
+        config = bpy.context.window_manager.paul_manager
+        if config.inst_repl_use_translation:
+            objs_plan = []
+            objs_model = []
+            for obj in bpy.context.scene.objects:
+                if obj.type != 'MESH':
+                    continue
+
+                if config.inst_repl_from in obj.name:
+                    objs_plan.append(obj)
+                if config.inst_repl_to in obj.name:
+                    objs_model.append(obj)
+
+            if not objs_plan or not objs_model:
+                return {'FINISHED'}
+
+            edit_mode_out()
+            obj_for_select = []
+            for obj_plan in objs_plan:
+                bpy.ops.object.select_all(action='DESELECT')
+
+                name = obj_plan.name[:obj_plan.name.find(config.inst_repl_from)]
+                for obj_model in objs_model:
+                    if name == obj_model.name[:obj_model.name.find(config.inst_repl_to)]:
+                        obj_model.select = True
+                        obj_plan.select = True
+                        obj_for_select.append(obj_plan)
+                        bpy.context.scene.objects.active = obj_model
+                        bpy.ops.object.make_links_data(type='OBDATA')
+                        break
+
+            bpy.ops.object.select_all(action='DESELECT')
+            for obj in obj_for_select:
+                obj.select = True
+            return {'FINISHED'}
+
+
         self.selectors = []
         objs = [o for o in context.scene.objects if o.select]
         if len(objs) == 2:
@@ -11426,6 +11471,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_batch = bpy.props.BoolProperty(name='disp_batch', default=False)
     disp_render = bpy.props.BoolProperty(name='disp_render', default=False)
     disp_bremover = bpy.props.BoolProperty(name='disp_bremover', default=False)
+    disp_inst_repl = bpy.props.BoolProperty(name='disp_inst_repl', default=False)
 
     mborder_size = FloatProperty(name="mborder_size", default=0.1, precision=1, max=100, min=-100)
 
@@ -11457,6 +11503,9 @@ class paul_managerProps(bpy.types.PropertyGroup):
     active_length_ratio = BoolProperty(name='active_length_ratio', default=False)
     verts_activate = BoolProperty(name='verts_activate', default=False)
     valsel_objectmode = BoolProperty(name='valsel_objectmode', default=False)
+    inst_repl_use_translation = BoolProperty(name='inst_repl_use_translation', default=True)
+    inst_repl_from = StringProperty(name="inst_repl_from")
+    inst_repl_to = StringProperty(name="inst_repl_to")
 
     chunks_clamp = bpy.props.IntProperty(name="chunks_clamp", default=1, \
                                          min=1, max=100, step=1, subtype='FACTOR')
