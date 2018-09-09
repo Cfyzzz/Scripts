@@ -71,12 +71,13 @@
 # 0-9-28(23.07.2018) Move Panel: Batch Remover
 # 0-9-29(03.09.2018) Render(UI): Add Shortcut
 # 0-9-30(08.09.2018) Change (Instances ++ replace) add: Use translation
+# 0-9-31(09.09.2018) Change (Instances ++ replace) add: Selected only
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 30),
+    "version": (0, 9, 31),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -8267,6 +8268,9 @@ class LayoutSSPanel(bpy.types.Panel):
                 row = col_top.row(align=True)
                 col2 = row.box().box().column()
                 col2.prop(lt, 'inst_repl_use_translation', text='Use translation')
+                col2 = col2.column()
+                col2.active = lt.inst_repl_use_translation
+                col2.prop(lt, 'inst_repl_select', text='Selected only')
                 col2.prop(lt, 'inst_repl_from', text='From')
                 col2.prop(lt, 'inst_repl_to', text='To')
             row = col_top.row(align=True)
@@ -10535,7 +10539,7 @@ class PaInstancesMeshnameReplacePP(bpy.types.Operator):
             objs_plan = []
             objs_model = []
             for obj in bpy.context.scene.objects:
-                if obj.type != 'MESH':
+                if obj.type != 'MESH' or (config.inst_repl_select and not obj.select):
                     continue
 
                 if config.inst_repl_from in obj.name:
@@ -11506,6 +11510,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     inst_repl_use_translation = BoolProperty(name='inst_repl_use_translation', default=True)
     inst_repl_from = StringProperty(name="inst_repl_from")
     inst_repl_to = StringProperty(name="inst_repl_to")
+    inst_repl_select = BoolProperty(name='inst_repl_select', default=False)
 
     chunks_clamp = bpy.props.IntProperty(name="chunks_clamp", default=1, \
                                          min=1, max=100, step=1, subtype='FACTOR')
