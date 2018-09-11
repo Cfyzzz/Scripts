@@ -72,12 +72,13 @@
 # 0-9-29(03.09.2018) Render(UI): Add Shortcut
 # 0-9-30(08.09.2018) Change (Instances ++ replace) add: Use translation
 # 0-9-31(09.09.2018) Change (Instances ++ replace) add: Selected only
+# 0-9-32(11.09.2018) Change (Instances ++ replace) inactivate Selected only
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 31),
+    "version": (0, 9, 32),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -11507,7 +11508,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     active_length_ratio = BoolProperty(name='active_length_ratio', default=False)
     verts_activate = BoolProperty(name='verts_activate', default=False)
     valsel_objectmode = BoolProperty(name='valsel_objectmode', default=False)
-    inst_repl_use_translation = BoolProperty(name='inst_repl_use_translation', default=True)
+    inst_repl_use_translation = BoolProperty(name='inst_repl_use_translation', default=False)
     inst_repl_from = StringProperty(name="inst_repl_from")
     inst_repl_to = StringProperty(name="inst_repl_to")
     inst_repl_select = BoolProperty(name='inst_repl_select', default=False)
