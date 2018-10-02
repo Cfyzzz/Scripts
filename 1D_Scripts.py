@@ -7345,8 +7345,12 @@ def render_me(filepath):
     if not os.path.exists(filepath):
         os.mkdir(filepath)
     outputfile_s = os.path.join(filepath, 'stat.txt')
-    with open(outputfile_s, 'w') as w_file:
-        w_file.write('Batch stats:\n' + '_________________________________\n')
+
+    if os.path.isfile(outputfile_s):
+        os.remove(outputfile_s)
+
+    file_stat = open(outputfile_s, 'a', encoding='utf8')
+    file_stat.write('Batch stats:\n' + '_________________________________\n')
 
     camsi = []
     progress = 0
@@ -7383,22 +7387,24 @@ def render_me(filepath):
                         str(round(res_x * rp / 100)) + 'x' + str(round(res_y * rp / 100)) + ' | ' + \
                         str(round(p_tmp_scale / sq_backet)) + '\n'
 
-    with open(outputfile_s, 'a') as w_file:
-        w_file.write('Total resolution = ' + str(round(math.sqrt(progress))) + 'x' + str(round(math.sqrt(progress))) + \
-                     ' (' + str(round(math.sqrt(progress) * rp / 100)) + 'x' + str(
-            round(math.sqrt(progress) * rp / 100)) + ')' + '\n')
-        w_file.write('Default Resolution = ' + str(glob_res[0]) + 'x' + str(glob_res[1]) + ' (' + str(rp) + '%)' + '\n')
-        w_file.write('Tiles = ' + str(backet_x) + 'x' + str(backet_y) + '\n')
-        w_file.write('Total tiles = ' + str(round(progress * rp / (sq_backet * 100))) + '\n\n')
-        w_file.write('Cameras:\n' + 'Name | resolution | scaled (' + str(rp) + '%) | tiles\n' + \
-                     '________________________________________\n')
-        w_file.write(sline)
+    file_stat.write('Total resolution = ' + str(round(math.sqrt(progress))) + 'x' + str(round(math.sqrt(progress))) + \
+                 ' (' + str(round(math.sqrt(progress) * rp / 100)) + 'x' + str(
+        round(math.sqrt(progress) * rp / 100)) + ')' + '\n')
+    file_stat.write('Default Resolution = ' + str(glob_res[0]) + 'x' + str(glob_res[1]) + ' (' + str(rp) + '%)' + '\n')
+    file_stat.write('Tiles = ' + str(backet_x) + 'x' + str(backet_y) + '\n')
+    file_stat.write('Total tiles = ' + str(round(progress * rp / (sq_backet * 100))) + '\n\n')
+    file_stat.write('Cameras:\n' + 'Name | resolution | scaled (' + str(rp) + '%) | tiles\n' + \
+                 '________________________________________\n')
+    file_stat.write(sline)
 
     outputfile = os.path.join(filepath, 'log.txt')
-    with open(outputfile, 'w') as w_file:
-        w_file.write('Cameras:\n' + 'Name | resolution | scaled (' + str(
-            rp) + '%) | progress % | remaining time | elapsed time\n' + \
-                     '_____________________________________________________________________________\n')
+    if os.path.isfile(outputfile):
+        os.remove(outputfile)
+
+    file_log = open(outputfile, 'a', encoding='utf8')
+    file_log.write('Cameras:\n' + 'Name | resolution | scaled (' + str(
+        rp) + '%) | progress % | remaining time | elapsed time\n' + \
+                 '_____________________________________________________________________________\n')
 
     p_tmp = 0
     time_start = time.time()
@@ -7418,16 +7424,15 @@ def render_me(filepath):
 
             s_rt = time.strftime('%H:%M:%S', time.gmtime(r_time))
             s_lt = time.strftime('%H:%M:%S', time.gmtime(time_tmp))
-            with open(outputfile, 'a') as w_file:
-                w_file.write(cam.name + ' | ' + str(camsi[i][0]) + 'x' + str(camsi[i][1]) + ' | ' + \
-                             str(round(camsi[i][0] * rp / 100)) + 'x' + str(round(camsi[i][1] * rp / 100)) + ' | ' + \
-                             str(proc) + ' | ' + s_lt + ' | ' + s_rt + '\n')
+            file_log.write(cam.name + ' | ' + str(camsi[i][0]) + 'x' + str(camsi[i][1]) + ' | ' + \
+                         str(round(camsi[i][0] * rp / 100)) + 'x' + str(round(camsi[i][1] * rp / 100)) + ' | ' + \
+                         str(proc) + ' | ' + s_lt + ' | ' + s_rt + '\n')
             i += 1
 
     bpy.context.scene.render.resolution_x = glob_res[0]
     bpy.context.scene.render.resolution_y = glob_res[1]
-    # print('Done!')
-    # print(bpy.data.scenes[sceneName].render.filepath)
+    file_stat.close()
+    file_log.close()
     return {'FINISHED'}
 
 
