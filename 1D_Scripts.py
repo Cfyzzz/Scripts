@@ -73,12 +73,13 @@
 # 0-9-30(08.09.2018) Change (Instances ++ replace) add: Use translation
 # 0-9-31(09.09.2018) Change (Instances ++ replace) add: Selected only
 # 0-9-32(11.09.2018) Change (Instances ++ replace) inactivate Selected only
+# 0-9-33(02.10.2018) Change (Render) add: OpenGL Render
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 32),
+    "version": (0, 9, 33),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7338,6 +7339,7 @@ class ExportSomeData(Operator, ExportHelper):
 
 
 def render_me(filepath):
+    config = bpy.context.window_manager.paul_manager
     sceneName = bpy.context.scene.name
     glob_res = [bpy.context.scene.render.resolution_x, bpy.context.scene.render.resolution_y]
 
@@ -7387,13 +7389,13 @@ def render_me(filepath):
                         str(round(res_x * rp / 100)) + 'x' + str(round(res_y * rp / 100)) + ' | ' + \
                         str(round(p_tmp_scale / sq_backet)) + '\n'
 
-    file_stat.write('Total resolution = ' + str(round(math.sqrt(progress))) + 'x' + str(round(math.sqrt(progress))) + \
+    file_stat.write('Total resolution = ' + str(round(math.sqrt(progress))) + 'x' + str(round(math.sqrt(progress))) +
                  ' (' + str(round(math.sqrt(progress) * rp / 100)) + 'x' + str(
         round(math.sqrt(progress) * rp / 100)) + ')' + '\n')
     file_stat.write('Default Resolution = ' + str(glob_res[0]) + 'x' + str(glob_res[1]) + ' (' + str(rp) + '%)' + '\n')
     file_stat.write('Tiles = ' + str(backet_x) + 'x' + str(backet_y) + '\n')
     file_stat.write('Total tiles = ' + str(round(progress * rp / (sq_backet * 100))) + '\n\n')
-    file_stat.write('Cameras:\n' + 'Name | resolution | scaled (' + str(rp) + '%) | tiles\n' + \
+    file_stat.write('Cameras:\n' + 'Name | resolution | scaled (' + str(rp) + '%) | tiles\n' +
                  '________________________________________\n')
     file_stat.write(sline)
 
@@ -7415,7 +7417,11 @@ def render_me(filepath):
             bpy.context.scene.render.resolution_x = camsi[i][0]
             bpy.context.scene.render.resolution_y = camsi[i][1]
             bpy.data.scenes[sceneName].render.filepath = filepath + '\\' + cam.name
-            bpy.ops.render.render(animation=False, write_still=True)
+            if config.batch_opengl:
+                bpy.ops.render.opengl(animation=False, write_still=True, view_context=False)
+            else:
+                bpy.ops.render.render(animation=False, write_still=True)
+
             p_tmp += camsi[i][0] * camsi[i][1]
             proc = max(round(p_tmp * 100 / progress), 1)
             r_time = time.time() - time_start
@@ -8002,6 +8008,8 @@ class LayoutSSPanel(bpy.types.Panel):
 
             if lt.disp_batch:
                 box = col_render.column(align=True).box().column()
+                col_top = box.column(align=True)
+                col_top.prop(lt, "batch_opengl", text="OpenGL Render")
                 col_top = box.column(align=True)
                 col_top.operator("scene.render_me", text='Batch Render')
                 col_top = box.column(align=True)
@@ -11517,6 +11525,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     inst_repl_from = StringProperty(name="inst_repl_from")
     inst_repl_to = StringProperty(name="inst_repl_to")
     inst_repl_select = BoolProperty(name='inst_repl_select', default=False)
+    batch_opengl = BoolProperty(name='batch_opengl', default=False)
 
     chunks_clamp = bpy.props.IntProperty(name="chunks_clamp", default=1, \
                                          min=1, max=100, step=1, subtype='FACTOR')
