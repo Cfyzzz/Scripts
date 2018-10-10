@@ -74,12 +74,13 @@
 # 0-9-31(09.09.2018) Change (Instances ++ replace) add: Selected only
 # 0-9-32(11.09.2018) Change (Instances ++ replace) inactivate Selected only
 # 0-9-33(02.10.2018) Change (Render) add: OpenGL Render
+# 0-10-00(11.10.2018) Reformat Panel Edges/loops
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 9, 33),
+    "version": (0, 10, 0),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7522,32 +7523,127 @@ class LayoutSSPanel(bpy.types.Panel):
         row = col.row(align=False)
         row.operator("mesh.simple_scale_operator", text='XYcollapse').type_op = 0
 
-        split = col.split(percentage=0.15)
-        if lt.display:
-            split.prop(lt, "display", text="", icon='DOWNARROW_HLT')
+        split = col.split()
+        if lt.display_edgloop:
+            split.prop(lt, "display_edgloop", text="Edges/Loops", icon='DOWNARROW_HLT')
         else:
-            split.prop(lt, "display", text="", icon='RIGHTARROW')
+            split.prop(lt, "display_edgloop", text="Edges/Loops", icon='RIGHTARROW')
 
-        spread_op = split.operator("mesh.spread_operator", text='Spread Loop')
-
-        if lt.display:
+        if lt.display_edgloop:
             box = col.column(align=True).box().column()
             col_top = box.column(align=True)
+
+            # Loop Resolve
             row = col_top.row(align=True)
-            row.prop(lt, 'spread_x', text='Spread X')
+            row.operator("paul.loop_resolve", text='Loop Resolve')
+            row.prop(lt, "disp_loopresolve", text='', icon='DOWNARROW_HLT' if lt.disp_loopresolve else 'RIGHTARROW')
+            if lt.disp_loopresolve:
+                row = col_top.row(align=True)
+                row2 = row.box().box()
+                if lt.loopresolve_relative:
+                    row2.prop(lt, 'loopresolve_step', text='Step')
+                else:
+                    row2.prop(lt, 'loopresolve_dist', text='Dist')
+
+                row2.prop(lt, 'loopresolve_relative', text='', icon='ALIGN')
+
+            # Spread Loop
             row = col_top.row(align=True)
-            row.prop(lt, 'spread_y', text='Spread Y')
+            row.operator("mesh.spread_operator", text='Spread Loop')
+            row.prop(lt, "display", text='', icon='DOWNARROW_HLT' if lt.display else 'RIGHTARROW')
+            if lt.display:
+                row = col_top.row(align=True)
+                box2 = row.box().box()
+                col2 = box2.column(align=True)
+                row2 = col2.row(align=True)
+                row2.prop(lt, 'spread_x', text='Spread X')
+                row2 = col2.row(align=True)
+                row2.prop(lt, 'spread_y', text='Spread Y')
+                row2 = col2.row(align=True)
+                row2.prop(lt, 'spread_z', text='Spread Z')
+                row2 = col2.row(align=True)
+                row2.prop(lt, 'relation', text='Uniform')
+                box2 = col2.box().column()
+                row2 = box2.row(align=True)
+                row2.prop(lt, 'shape_spline', text='Shape spline')
+                row2 = box2.row(align=True)
+                row2.active = lt.shape_spline
+                row2.prop(lt, 'spline_Bspline2', text='Smooth transition')
+
+            # Create B-Arc
             row = col_top.row(align=True)
-            row.prop(lt, 'spread_z', text='Spread Z')
+            row.operator("mesh.barc", text='Create B-Arc').type_op = 0
+            row.prop(lt, "disp_barc", text='', icon='DOWNARROW_HLT' if lt.disp_barc else 'RIGHTARROW')
+            if lt.disp_barc:
+                row2 = col_top.row(align=True)
+                box2 = row2.box().box()
+                col_top2 = box2.column(align=True)
+                row = col_top2.row(align=True)
+                row.prop(lt, "barc_rad", text="Radius")
+                col_top2 = box2.column(align=True)
+                row = col_top2.row(align=True)
+                row.operator("mesh.barc", text="Set radius").type_op = 1
+                col_top2 = box2.column(align=True)
+                row = col_top2.row(align=True)
+                row.operator("mesh.barc", text="Cursor to center").type_op = 2
+
+            # Ed reduce x2'
             row = col_top.row(align=True)
-            row.prop(lt, 'relation', text='Uniform')
-            box = box.box().column()
-            row = box.row(align=True)
-            row.prop(lt, 'shape_spline', text='Shape spline')
-            row = box.row(align=True)
-            row.active = lt.shape_spline
-            row.prop(lt, 'spline_Bspline2', text='Smooth transition')
-            row = box.row(align=True)
+            row.operator("mesh.modal_cheredator", text='Ed reduce x2').type_op = 0
+            row.prop(lt, "disp_reduce", text='', icon='DOWNARROW_HLT' if lt.disp_reduce else 'RIGHTARROW')
+            if lt.disp_reduce:
+                row = col_top.row(align=True)
+                box2 = row.box().box()
+                row2 = box2.column(align=True)
+                row2.operator("mesh.modal_cheredator", text='run reduce loop').type_op = 1
+
+            # Set Edges Length
+            row = col_top.row(align=True)
+            if lt.disp_sel:
+                row.prop(lt, "disp_sel", text="Set Edges Length", icon='DOWNARROW_HLT')
+            else:
+                row.prop(lt, "disp_sel", text="Set Edges Length", icon='RIGHTARROW')
+
+            if lt.disp_sel:
+                box2 = col_top.column(align=True).box().box()
+                row = box2.column(align=True)
+                row.operator("mesh.setedgslen", text='Set from MID').type_op = 0
+                row.operator("mesh.setedgslen", text='Set from cursor').type_op = 3
+                row.operator("mesh.setedgslen", text='Set to cursor').type_op = 1
+                row.operator("mesh.setedgslen", text='Set Key').type_op = 2
+                row.prop(lt, "active_length_ratio", text='Active length Ratio')
+
+            # AutoFaceAngleSharp
+            row = col_top.row(align=True)
+            row.operator("object.afas", text='AutoFaceAngleSharp')
+            row.prop(lt, "disp_afas", text='', icon='DOWNARROW_HLT' if lt.disp_afas else 'RIGHTARROW')
+            if lt.disp_afas:
+                row = col_top.row(align=True)
+                row2 = row.box().box()
+                row2.prop(lt, 'afas_angle', text='Angle')
+
+            # Edges pairfill'
+            row = col_top.row(align=True)
+            row.operator("paul.edges_pairfill", text='Edges pairfill')
+            row.prop(lt, "disp_pairfill", text='', icon='DOWNARROW_HLT' if lt.disp_pairfill else 'RIGHTARROW')
+            if lt.disp_pairfill:
+                row = col_top.row(align=True)
+                row2 = row.box().box()
+                row2.prop(lt, 'pairfill_options', text='Method')
+
+            # Loop reduce
+            row = col_top.row(align=True)
+            row.operator("paul.loop_reduce", text='Loop reduce')
+            row.prop(lt, "disp_loopreduce", text='', icon='DOWNARROW_HLT' if lt.disp_loopreduce else 'RIGHTARROW')
+            if lt.disp_loopreduce:
+                row = col_top.row(align=True)
+                row2 = row.box().box()
+                row2.prop(lt, 'loopreduce_step', text='Step')
+
+            # 3DLoop
+            row = col_top.row(align=True)
+            row.operator("mesh.projectloop", text='3DLoop')
+
 
         split = col.split()
         if lt.display_align:
@@ -7686,20 +7782,7 @@ class LayoutSSPanel(bpy.types.Panel):
                 row = col_top.row(align=True)
                 row.prop(lt, "shift_copy", text="Copy")
 
-        split = col.split()
-        if lt.disp_sel:
-            split.prop(lt, "disp_sel", text="Set Edges Length", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_sel", text="Set Edges Length", icon='RIGHTARROW')
 
-        if lt.disp_sel:
-            box = col.column(align=True).box().column()
-            row = box.column(align=True)
-            row.operator("mesh.setedgslen", text='Set from MID').type_op = 0
-            row.operator("mesh.setedgslen", text='Set from cursor').type_op = 3
-            row.operator("mesh.setedgslen", text='Set to cursor').type_op = 1
-            row.operator("mesh.setedgslen", text='Set Key').type_op = 2
-            row.prop(lt, "active_length_ratio", text='Active length Ratio')
 
         split = col.split()
         if lt.display_3dmatch:
@@ -7780,17 +7863,7 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.operator("mesh.mat_extrude", text='Template Extrude')
 
-        split = col.split()
-        if lt.disp_projectloop:
-            split.prop(lt, "disp_projectloop", text="3DLoop", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_projectloop", text="3DLoop", icon='RIGHTARROW')
 
-        if lt.disp_projectloop:
-            box = col.column(align=True).box().column()
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("mesh.projectloop", text='Project 3DLoop')
 
         split = col.split()
         if lt.disp_bremover:
@@ -7802,24 +7875,7 @@ class LayoutSSPanel(bpy.types.Panel):
             col_top = box.column(align=False)
             create_panel_batch_remover(col=col_top, scene=scene)
 
-        split = col.split(percentage=0.15)
-        if lt.disp_barc:
-            split.prop(lt, "disp_barc", text="", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_barc", text="", icon='RIGHTARROW')
 
-        split.operator("mesh.barc", text='Create B-Arc').type_op = 0
-        if lt.disp_barc:
-            box = col.column(align=True).box().column()
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.prop(lt, "barc_rad", text="Radius")
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("mesh.barc", text="Set radius").type_op = 1
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("mesh.barc", text="Cursor to center").type_op = 2
 
         def _FEDGE():
             pass
@@ -7954,17 +8010,7 @@ class LayoutSSPanel(bpy.types.Panel):
                 row.operator("mesh.dist_verts", text='Find doubles verts').type_op = 0
                 row.operator("mesh.dist_verts", text='Select radius verts').type_op = 1
 
-        split = col.split(percentage=0.15)
-        if lt.disp_reduce:
-            split.prop(lt, "disp_reduce", text="", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_reduce", text="", icon='RIGHTARROW')
 
-        split.operator("mesh.modal_cheredator", text='Ed reduce x2').type_op = 0
-        if lt.disp_reduce:
-            box = col.column(align=True).box().column()
-            row = box.column(align=True)
-            row.operator("mesh.modal_cheredator", text='run reduce loop').type_op = 1
 
         split = col.split()
         if lt.disp_compmeshes:
@@ -8118,8 +8164,7 @@ class LayoutSSPanel(bpy.types.Panel):
             col_top = box.column(align=True)
             row = col_top.row(align=True)
             row.operator("paul.instances_recount", text='Obj Verts report')
-            row.prop(lt, "disp_ovr", text='', icon='DOWNARROW_HLT' \
-                if lt.disp_ovr else 'RIGHTARROW')
+            row.prop(lt, "disp_ovr", text='', icon='DOWNARROW_HLT' if lt.disp_ovr else 'RIGHTARROW')
 
             if lt.disp_ovr:
                 row = col_top.row(align=True)
@@ -8144,43 +8189,10 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("paul.heavy_ngons", text='Heavy NGons')
             row = col_top.row(align=True)
             row.operator("paul.clean_glass", text='Clean Glass')
-
-            row = col_top.row(align=True)
-            row.operator("paul.loop_resolve", text='Loop Resolve')
-            row.prop(lt, "disp_loopresolve", text='', icon='DOWNARROW_HLT' \
-                if lt.disp_loopresolve else 'RIGHTARROW')
-            if lt.disp_loopresolve:
-                row = col_top.row(align=True)
-                row2 = row.box().box()
-                if lt.loopresolve_relative:
-                    row2.prop(lt, 'loopresolve_step', text='Step')
-                else:
-                    row2.prop(lt, 'loopresolve_dist', text='Dist')
-
-                row2.prop(lt, 'loopresolve_relative', text='', icon='ALIGN')
-
             row = col_top.row(align=True)
             row.operator("paul.verts_project_on_edge", text='Verts project')
-            row.prop(lt, "vproj_active", text='', icon='EDGESEL' \
-                if lt.vproj_active else 'MATCUBE')
+            row.prop(lt, "vproj_active", text='', icon='EDGESEL' if lt.vproj_active else 'MATCUBE')
 
-            row = col_top.row(align=True)
-            row.operator("paul.edges_pairfill", text='Edges pairfill')
-            row.prop(lt, "disp_pairfill", text='', icon='DOWNARROW_HLT' \
-                if lt.disp_pairfill else 'RIGHTARROW')
-            if lt.disp_pairfill:
-                row = col_top.row(align=True)
-                row2 = row.box().box()
-                row2.prop(lt, 'pairfill_options', text='Method')
-
-            row = col_top.row(align=True)
-            row.operator("paul.loop_reduce", text='Loop reduce')
-            row.prop(lt, "disp_loopreduce", text='', icon='DOWNARROW_HLT' \
-                if lt.disp_loopreduce else 'RIGHTARROW')
-            if lt.disp_loopreduce:
-                row = col_top.row(align=True)
-                row2 = row.box().box()
-                row2.prop(lt, 'loopreduce_step', text='Step')
 
         def _MISC():
             pass
@@ -8337,14 +8349,7 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.operator("paul.mats_equalize", text='Mats equalize')
 
-            row = col_top.row(align=True)
-            row.operator("object.afas", text='AutoFaceAngleSharp')
-            row.prop(lt, "disp_afas", text='', icon='DOWNARROW_HLT' \
-                if lt.disp_afas else 'RIGHTARROW')
-            if lt.disp_afas:
-                row = col_top.row(align=True)
-                row2 = row.box().box()
-                row2.prop(lt, 'afas_angle', text='Angle')
+
 
             # row = col_top.row(align=True)
             # row.operator("paul.gsl", text='Group Select Linked')
@@ -11490,6 +11495,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_render = bpy.props.BoolProperty(name='disp_render', default=False)
     disp_bremover = bpy.props.BoolProperty(name='disp_bremover', default=False)
     disp_inst_repl = bpy.props.BoolProperty(name='disp_inst_repl', default=False)
+    display_edgloop = bpy.props.BoolProperty(name='display_edgloop', default=False)
 
     mborder_size = FloatProperty(name="mborder_size", default=0.1, precision=1, max=100, min=-100)
 
