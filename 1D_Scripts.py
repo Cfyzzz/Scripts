@@ -9522,7 +9522,7 @@ def AFASMain(ANGLE_RAD, context):
 
 
 class AFASOperator(bpy.types.Operator):
-    """Auto Face Angle Sharp"""
+    """Set sharp on object"""
     bl_idname = "object.afas"
     bl_label = "Auto Face Angle Sharp"
     bl_options = {'REGISTER', 'UNDO'}
@@ -9779,6 +9779,7 @@ class CrossPolsOperator(bpy.types.Operator):
 
 
 class Project3DLoopOperator(bpy.types.Operator):
+    """Make loop from two projections"""
     bl_idname = "mesh.projectloop"
     bl_label = "Project 3D Loop"
     bl_options = {'REGISTER', 'UNDO'}
@@ -9793,6 +9794,7 @@ class Project3DLoopOperator(bpy.types.Operator):
 
 
 class BarcOperator(bpy.types.Operator):
+    """Shapes loop to arc by sidepoints of loop anf middle active"""
     bl_idname = "mesh.barc"
     bl_label = "BARC repeat"
     bl_options = {'REGISTER', 'UNDO'}
@@ -9909,7 +9911,7 @@ class MiscOperator(bpy.types.Operator):
 
 
 class SpreadOperator(bpy.types.Operator):
-    """Tooltip"""
+    """Distributes vertices of loop by axes"""
     bl_idname = "mesh.spread_operator"
     bl_label = "Spread operator"
     bl_options = {'REGISTER', 'UNDO'}
@@ -10411,6 +10413,7 @@ class PaGroupSelectLinked(bpy.types.Operator):
 
 
 class PaLoopResolve(bpy.types.Operator):
+    """Resolve loop density by Besier in vertex mode or split edges in edges mode"""
     bl_idname = "paul.loop_resolve"
     bl_label = "Loop Resolve"
     bl_options = {'REGISTER', 'UNDO'}
@@ -10426,6 +10429,7 @@ class PaLoopResolve(bpy.types.Operator):
 
 
 class PaLoopReduce(bpy.types.Operator):
+    """Reduce selected loop ring"""
     bl_idname = "paul.loop_reduce"
     bl_label = "Loop Reduce"
     bl_options = {'REGISTER', 'UNDO'}
@@ -11210,7 +11214,7 @@ class PaInstancesSelPair(bpy.types.Operator):
 
 
 class PaEdgesPairFill(bpy.types.Operator):
-    r"""Строит фейсы между ребрами по-парно"""
+    r"""Connect pairs of selected edges"""
     bl_idname = "paul.edges_pairfill"
     bl_label = "Edges Pair Fill"
     bl_options = {'REGISTER', 'UNDO'}
@@ -11474,7 +11478,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_chunks = bpy.props.BoolProperty(name='disp_chunks', default=False)
     disp_corner = bpy.props.BoolProperty(name='disp_corner', default=False)
     disp_reduce = bpy.props.BoolProperty(name='disp_reduce', default=False)
-    disp_sel = bpy.props.BoolProperty(name='disp_sel', default=False)
+    disp_sel = bpy.props.BoolProperty(name='disp_sel', default=False, description='Set length of selected edges equal to stored in Sideshift ')
     disp_zmj100 = bpy.props.BoolProperty(name='disp_zmj100', default=False)
     disp_distverts = bpy.props.BoolProperty(name='disp_distverts', default=False)
     disp_compmeshes = bpy.props.BoolProperty(name='disp_compmeshes', default=False)
@@ -11495,7 +11499,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_render = bpy.props.BoolProperty(name='disp_render', default=False)
     disp_bremover = bpy.props.BoolProperty(name='disp_bremover', default=False)
     disp_inst_repl = bpy.props.BoolProperty(name='disp_inst_repl', default=False)
-    display_edgloop = bpy.props.BoolProperty(name='display_edgloop', default=False)
+    display_edgloop = bpy.props.BoolProperty(name='display_edgloop', default=False, description='Tools about Edges and Loops')
 
     mborder_size = FloatProperty(name="mborder_size", default=0.1, precision=1, max=100, min=-100)
 
@@ -11850,6 +11854,7 @@ def print_info(message, self=None):
 
 
 class CheredatorModalOperator(bpy.types.Operator):
+    """Remove checker deselected vertices from loop"""
     bl_idname = "mesh.modal_cheredator"
     bl_label = "Cheredator"
     bl_options = {'REGISTER', 'UNDO'}
