@@ -7479,6 +7479,44 @@ class PaImageTPanel(bpy.types.Panel):
         row.operator("suv.spreads", text='Print loop')
 
 
+def panel_add_button(base_layout, operator, text, align=False):
+    row = base_layout.row(align=align)
+    row.operator(operator.bl_idname, text=text)
+    return row
+
+
+def panel_add_spoiler(base_layout, prop, text):
+    lt = bpy.context.window_manager.paul_manager
+    split = base_layout.split()
+    if lt[prop]:
+        split.prop(lt, prop, text=text, icon='DOWNARROW_HLT')
+    else:
+        split.prop(lt, prop, text=text, icon='RIGHTARROW')
+
+    if lt[prop]:
+        box = base_layout.column(align=True).box().column()
+        col_top = box.column(align=True)
+        return col_top
+    return None
+
+
+def panel_add_button_and_box(base_layout, operator, text, spoiler, props, align=False):
+    lt = bpy.context.window_manager.paul_manager
+    row = base_layout.row(align=align)
+    row.operator(operator, text=text)
+    row.prop(lt, spoiler.name, text='', icon='DOWNARROW_HLT' if spoiler else 'RIGHTARROW')
+    if spoiler:
+        row = base_layout.row(align=True)
+        box2 = row.box().box()
+        col2 = box2.column(align=True)
+        for prop in props:
+            row2 = col2.row(align=True)
+            row2.prop(lt, prop[0], text=prop[1])
+        return col2
+    return None
+
+
+
 class LayoutSSPanel(bpy.types.Panel):
     def axe_select(self, context):
         axes = ['X', 'Y', 'Z']
@@ -7518,6 +7556,178 @@ class LayoutSSPanel(bpy.types.Panel):
 
         layout = self.layout
         col = layout.column(align=True)
+
+        lay_cad = panel_add_spoiler(base_layout=col, prop='disp_cad', text='CAD')
+        if lay_cad:
+            lay_aligner = panel_add_spoiler(base_layout=lay_cad, prop='display_align', text='Aligner')
+            if lay_aligner:
+                if lt.display_align and context.mode == 'EDIT_MESH':
+                    col_top = lay_aligner.column(align=True)
+                    row = col_top.row(align=True)
+                    row.operator("mesh.align_operator", text='Store Edge').type_op = 1
+                    row = col_top.row(align=True)
+                    row.operator("mesh.align_operator", text='Align').type_op = 0
+                    row = col_top.row(align=True)
+                    row.prop(lt, 'align_dist_z', text='Superpose')
+                    row = col_top.row(align=True)
+                    row.prop(lt, 'align_lock_z', text='lock Z')
+
+                if lt.display_align and context.mode == 'OBJECT':
+                    col_top = lay_aligner.column(align=True)
+                    row = col_top.row(align=True)
+                    row.operator("mesh.align_operator", text='Store Edge').type_op = 1
+                    row = col_top.row(align=True)
+                    row.operator("mesh.align_operator", text='Align').type_op = 2
+                    col_top = lay_aligner.column(align=False)
+                    row = col_top.row(align=True)
+                    row.prop(context.scene, 'AxesProperty', text='Axis')
+                    row = col_top.row(align=True)
+                    row.prop(context.scene, 'ProjectsProperty', text='Projection')
+
+            lay_sideshift = panel_add_spoiler(base_layout=lay_cad, prop='display_offset', text='Sideshift')
+            if lay_sideshift:
+                col_top = lay_sideshift.column(align=True)
+                row = col_top.row(align=True)
+                row.operator("paul.sideshift_dist", text='Store dist')
+                row = col_top.row(align=True)
+                row.operator("paul.sideshift_cursor", text='Active » Cursor')
+
+                row = col_top.row(align=True)
+                row.prop(lt, "shift_lockX", text="X", icon='FREEZE')
+                row.prop(lt, "shift_lockY", text="Y", icon='FREEZE')
+                row.prop(lt, "shift_lockZ", text="Z", icon='FREEZE')
+
+                col_top.row(align=True)
+                split = col_top.split(percentage=0.76)
+                split.prop(lt, 'step_len', text='dist')
+                split.operator("mesh.offset_operator", text="Restore").type_op = 1
+                col_top.row(align=True)
+                split = col_top.split(percentage=0.5)
+                split.operator("paul.sideshift_backward", text="", icon='TRIA_LEFT')
+                split.operator("paul.sideshift_forward", text="", icon='TRIA_RIGHT')
+                row = col_top.row(align=True)
+                if context.mode == 'EDIT_MESH':
+                    row.prop(lt, "shift_copy", text="Copy")
+                else:
+                    row.prop(lt, "instance", text='Instance')
+                    row = col_top.row(align=True)
+                    row.prop(lt, "shift_copy", text="Copy")
+
+            lay_3dmatch = panel_add_spoiler(base_layout=lay_cad, prop='display_3dmatch', text='3D Match')
+            if lay_3dmatch:
+                col_top = lay_3dmatch.column(align=True)
+                row = col_top.row(align=True)
+                row.operator("mesh.align_operator", text='Store key').type_op = 3
+                row = col_top.row(align=True)
+                row.operator("mesh.align_operator", text='mirrorside').type_op = 7
+                row = col_top.row(align=True)
+                split = row.split(0.33, True)
+                split.scale_y = 1.5
+                split.operator("mesh.align_operator", text='Flip').type_op = 6
+                split.operator("mesh.align_operator", text='3D Match').type_op = 5
+
+            lay_polycross = panel_add_spoiler(base_layout=lay_cad, prop='disp_cp', text='Polycross')
+            if lay_polycross:
+                col_top = lay_polycross.column(align=True)
+                row = col_top.row(align=True)
+                split = row.split()
+                if lt.disp_cp_project:
+                    split.prop(lt, "disp_cp_project", text="Project active", icon='DOWNARROW_HLT')
+                else:
+                    split.prop(lt, "disp_cp_project", text="Project active", icon='RIGHTARROW')
+
+                if lt.disp_cp_project:
+                    box = col_top.column(align=True).box().column()
+                    row = box.row(align=True)
+                    split = row.split(0.5, True)
+                    split.operator("mesh.polycross", text='Section').type_op = 0  # section and clear filter
+                    split.operator("mesh.polycross", text='Cut').type_op = 1  # cross
+                    row = box.row(align=True)
+                    row.prop(lt, "fill_cuts", text="fill cut")
+                    row = box.row(align=True)
+                    row.prop(lt, "outer_clear", text="remove front")
+                    row = box.row(align=True)
+                    row.prop(lt, "inner_clear", text="remove bottom")
+
+                row = col_top.row(align=True)
+                split = row.split()
+                if lt.disp_cp_filter:
+                    split.prop(lt, "disp_cp_filter", text="Selection Filter", icon='DOWNARROW_HLT')
+                else:
+                    split.prop(lt, "disp_cp_filter", text="Selection Filter", icon='RIGHTARROW')
+
+                if lt.disp_cp_filter:
+                    box = col_top.column(align=True).box().column()
+                    row = box.row(align=True)
+                    row.operator("mesh.polycross", text='to SELECT').type_op = 2  # only filter
+                    row = box.row(align=True)
+                    row.prop(lt, "filter_edges", text="Filter Edges")
+                    row = box.row(align=True)
+                    row.prop(lt, "filter_verts_top", text="Filter Top")
+                    row = box.row(align=True)
+                    row.prop(lt, "filter_verts_bottom", text="Filter Bottom")
+
+            lay_rotor_scaler = panel_add_spoiler(base_layout=lay_cad, prop='disp_3drotor', text='3D Rotor/Scaler')
+            if lay_rotor_scaler:
+                col_top = lay_rotor_scaler.column(align=True)
+                row = col_top.row(align=True)
+                row.operator("mesh.rotor_operator", text='Store key').type_op = 1
+                row = col_top.row(align=True)
+                row.label(text='Scaler')
+                col_top.row(align=True)
+                split = col_top.split(percentage=0.5)
+                left_op = split.operator("mesh.rotor_operator", text="", icon='TRIA_LEFT')
+                left_op.type_op = 5
+                left_op.sign_op = -1
+                right_op = split.operator("mesh.rotor_operator", text="", icon='TRIA_RIGHT')
+                right_op.type_op = 5
+                right_op.sign_op = 1
+                row = col_top.row(align=True)
+                row.label(text='Rotor')
+                split = col_top.split(percentage=0.5)
+                left_op = split.operator("mesh.rotor_operator", text="", icon='TRIA_LEFT')
+                left_op.type_op = 0
+                left_op.sign_op = -1
+                right_op = split.operator("mesh.rotor_operator", text="", icon='TRIA_RIGHT')
+                right_op.type_op = 0
+                right_op.sign_op = 1
+                row = col_top.row(align=True)
+                if context.mode == 'EDIT_MESH':
+                    row.prop(lt, "rotor3d_copy", text="Copy")
+                else:
+                    row.prop(lt, "rotor3d_instance", text='Instance')
+                    row = col_top.row(align=True)
+                    row.prop(lt, "rotor3d_copy", text="Copy")
+
+            lay_corner = panel_add_spoiler(base_layout=lay_cad, prop='disp_corner', text='Corner Edges')
+            if lay_corner:
+                layout = lay_corner.column(align=True)
+                layout.operator("mesh.corner", text='Corner').type_op = 0
+                layout.operator("mesh.corner", text='Extend').type_op = 1
+                coner_act = lt.corner_active_edge
+                coner_to_act = lt.to_corner_active_edge
+                row = layout.row(align=True)
+                if coner_to_act:
+                    row.active = False
+                    lt.corner_active_edge = False
+                row.prop(lt, "corner_active_edge", text='Only active edge')
+                row = layout.row(align=True)
+                if coner_act:
+                    row.active = False
+                    lt.to_corner_active_edge = False
+                row.prop(lt, "to_corner_active_edge", text='To active edge')
+
+                col_in = layout.column(align=True)
+                col_in.operator(AMCornerCross.bl_idname, text="Extend cross")
+                col_in.operator(AMExtendCross.bl_idname, text="Corner cross")
+                col_in.prop(lt, "corner_overlap", text="Overlap")
+
+            row = lay_cad.row(align=True)
+            row.operator("paul.verts_project_on_edge", text='Verts project')
+            row.prop(lt, "vproj_active", text='', icon='EDGESEL' if lt.vproj_active else 'MATCUBE')
+
+
+
         row = col.row(align=False)
         row.operator("mesh.simple_scale_operator", text='Get Orientation').type_op = 1
         row = col.row(align=False)
@@ -7645,36 +7855,36 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("mesh.projectloop", text='3DLoop')
 
 
-        split = col.split()
-        if lt.display_align:
-            split.prop(lt, "display_align", text="Aligner", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "display_align", text="Aligner", icon='RIGHTARROW')
-
-        if lt.display_align and context.mode == 'EDIT_MESH':
-            box = col.column(align=True).box().column()
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("mesh.align_operator", text='Store Edge').type_op = 1
-            row = col_top.row(align=True)
-            align_op = row.operator("mesh.align_operator", text='Align').type_op = 0
-            row = col_top.row(align=True)
-            row.prop(lt, 'align_dist_z', text='Superpose')
-            row = col_top.row(align=True)
-            row.prop(lt, 'align_lock_z', text='lock Z')
-
-        if lt.display_align and context.mode == 'OBJECT':
-            box = col.column(align=True).box().column()
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("mesh.align_operator", text='Store Edge').type_op = 1
-            row = col_top.row(align=True)
-            align_op = row.operator("mesh.align_operator", text='Align').type_op = 2
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.prop(context.scene, 'AxesProperty', text='Axis')
-            row = col_top.row(align=True)
-            row.prop(context.scene, 'ProjectsProperty', text='Projection')
+        # split = col.split()
+        # if lt.display_align:
+        #     split.prop(lt, "display_align", text="Aligner", icon='DOWNARROW_HLT')
+        # else:
+        #     split.prop(lt, "display_align", text="Aligner", icon='RIGHTARROW')
+        #
+        # if lt.display_align and context.mode == 'EDIT_MESH':
+        #     box = col.column(align=True).box().column()
+        #     col_top = box.column(align=True)
+        #     row = col_top.row(align=True)
+        #     row.operator("mesh.align_operator", text='Store Edge').type_op = 1
+        #     row = col_top.row(align=True)
+        #     align_op = row.operator("mesh.align_operator", text='Align').type_op = 0
+        #     row = col_top.row(align=True)
+        #     row.prop(lt, 'align_dist_z', text='Superpose')
+        #     row = col_top.row(align=True)
+        #     row.prop(lt, 'align_lock_z', text='lock Z')
+        #
+        # if lt.display_align and context.mode == 'OBJECT':
+        #     box = col.column(align=True).box().column()
+        #     col_top = box.column(align=True)
+        #     row = col_top.row(align=True)
+        #     row.operator("mesh.align_operator", text='Store Edge').type_op = 1
+        #     row = col_top.row(align=True)
+        #     align_op = row.operator("mesh.align_operator", text='Align').type_op = 2
+        #     col_top = box.column(align=True)
+        #     row = col_top.row(align=True)
+        #     row.prop(context.scene, 'AxesProperty', text='Axis')
+        #     row = col_top.row(align=True)
+        #     row.prop(context.scene, 'ProjectsProperty', text='Projection')
 
         if context.mode == 'OBJECT':
             split = col.split()
@@ -7705,149 +7915,7 @@ class LayoutSSPanel(bpy.types.Panel):
                 row = col_top.row(align=True)
                 row.operator("object.railer_operator", text='Build').type_op = 4
 
-        split = col.split()
-        if lt.disp_3drotor:
-            split.prop(lt, "disp_3drotor", text="3D Rotor/Scaler", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_3drotor", text="3D Rotor/Scaler", icon='RIGHTARROW')
 
-        if lt.disp_3drotor:
-            box = col.column(align=True).box().column()
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("mesh.rotor_operator", text='Store key').type_op = 1
-            row = col_top.row(align=True)
-            row.label(text='Scaler')
-            row = col_top.row(align=True)
-            split = col_top.split(percentage=0.5)
-            left_op = split.operator("mesh.rotor_operator", text="", icon='TRIA_LEFT')
-            left_op.type_op = 5
-            left_op.sign_op = -1
-            right_op = split.operator("mesh.rotor_operator", text="", icon='TRIA_RIGHT')
-            right_op.type_op = 5
-            right_op.sign_op = 1
-            row = col_top.row(align=True)
-            row.label(text='Rotor')
-            split = col_top.split(percentage=0.5)
-            left_op = split.operator("mesh.rotor_operator", text="", icon='TRIA_LEFT')
-            left_op.type_op = 0
-            left_op.sign_op = -1
-            right_op = split.operator("mesh.rotor_operator", text="", icon='TRIA_RIGHT')
-            right_op.type_op = 0
-            right_op.sign_op = 1
-            row = col_top.row(align=True)
-            if context.mode == 'EDIT_MESH':
-                row.prop(lt, "rotor3d_copy", text="Copy")
-            else:
-                row.prop(lt, "rotor3d_instance", text='Instance')
-                row = col_top.row(align=True)
-                row.prop(lt, "rotor3d_copy", text="Copy")
-
-        split = col.split()
-        if lt.display_offset:
-            split.prop(lt, "display_offset", text="SideShift", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "display_offset", text="SideShift", icon='RIGHTARROW')
-
-        if lt.display_offset:
-            box = col.column(align=True).box().column()
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            # row.operator("mesh.align_operator", text = 'Store dist').type_op = 1
-            row.operator("paul.sideshift_dist", text='Store dist')
-            row = col_top.row(align=True)
-            # row.operator("mesh.offset_operator", text = 'Active » Cursor').type_op = 3
-            row.operator("paul.sideshift_cursor", text='Active » Cursor')
-
-            row = col_top.row(align=True)
-            lockX_op = row.prop(lt, "shift_lockX", text="X", icon='FREEZE')
-            lockY_op = row.prop(lt, "shift_lockY", text="Y", icon='FREEZE')
-            lockZ_op = row.prop(lt, "shift_lockZ", text="Z", icon='FREEZE')
-            # row = col_top.row(align=True)
-            # row.prop(lt,"shift_local", text="Local")
-
-            row = col_top.row(align=True)
-            split = col_top.split(percentage=0.76)
-            split.prop(lt, 'step_len', text='dist')
-            getlenght_op = split.operator("mesh.offset_operator", text="Restore").type_op = 1
-            row = col_top.row(align=True)
-            split = col_top.split(percentage=0.5)
-            split.operator("paul.sideshift_backward", text="", icon='TRIA_LEFT')
-            split.operator("paul.sideshift_forward", text="", icon='TRIA_RIGHT')
-            row = col_top.row(align=True)
-            if context.mode == 'EDIT_MESH':
-                row.prop(lt, "shift_copy", text="Copy")
-            else:
-                row.prop(lt, "instance", text='Instance')
-                row = col_top.row(align=True)
-                row.prop(lt, "shift_copy", text="Copy")
-
-
-
-        split = col.split()
-        if lt.display_3dmatch:
-            split.prop(lt, "display_3dmatch", text="3D Match", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "display_3dmatch", text="3D Match", icon='RIGHTARROW')
-
-        if lt.display_3dmatch:
-            box = col.column(align=True).box().column()
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("mesh.align_operator", text='Store key').type_op = 3
-            row = col_top.row(align=True)
-            row.operator("mesh.align_operator", text='mirrorside').type_op = 7
-            row = col_top.row(align=True)
-            split = row.split(0.33, True)
-            split.scale_y = 1.5
-            split.operator("mesh.align_operator", text='Flip').type_op = 6
-            split.operator("mesh.align_operator", text='3D Match').type_op = 5
-
-        split = col.split()
-        if lt.disp_cp:
-            split.prop(lt, "disp_cp", text="Polycross", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_cp", text="Polycross", icon='RIGHTARROW')
-
-        if lt.disp_cp:
-            box = col.column(align=True).box().column()
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            split = row.split()
-            if lt.disp_cp_project:
-                split.prop(lt, "disp_cp_project", text="Project active", icon='DOWNARROW_HLT')
-            else:
-                split.prop(lt, "disp_cp_project", text="Project active", icon='RIGHTARROW')
-
-            if lt.disp_cp_project:
-                row = col_top.row(align=True)
-                split = row.split(0.5, True)
-                split.operator("mesh.polycross", text='Section').type_op = 0  # section and clear filter
-                split.operator("mesh.polycross", text='Cut').type_op = 1  # cross
-                row = col_top.row(align=True)
-                row.prop(lt, "fill_cuts", text="fill cut")
-                row = col_top.row(align=True)
-                row.prop(lt, "outer_clear", text="remove front")
-                row = col_top.row(align=True)
-                row.prop(lt, "inner_clear", text="remove bottom")
-
-            row = col_top.row(align=True)
-            split = row.split()
-            if lt.disp_cp_filter:
-                split.prop(lt, "disp_cp_filter", text="Selection Filter", icon='DOWNARROW_HLT')
-            else:
-                split.prop(lt, "disp_cp_filter", text="Selection Filter", icon='RIGHTARROW')
-
-            if lt.disp_cp_filter:
-                row = col_top.row(align=True)
-                # row.active = lt.filter_edges or lt.filter_verts_bottom or lt.filter_verts_top
-                row.operator("mesh.polycross", text='to SELECT').type_op = 2  # only filter
-                row = col_top.row(align=True)
-                row.prop(lt, "filter_edges", text="Filter Edges")
-                row = col_top.row(align=True)
-                row.prop(lt, "filter_verts_top", text="Filter Top")
-                row = col_top.row(align=True)
-                row.prop(lt, "filter_verts_bottom", text="Filter Bottom")
 
         split = col.split()
         if lt.disp_matExtrude:
@@ -7966,34 +8034,34 @@ class LayoutSSPanel(bpy.types.Panel):
             layout = box.column(align=True)
             layout.prop(lt, "chunks_setting", text='Variant')
 
-        split = col.split()
-        if lt.disp_corner:
-            split.prop(lt, "disp_corner", text="Corner Edges", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_corner", text="Corner Edges", icon='RIGHTARROW')
-
-        if lt.disp_corner:
-            box = col.column(align=True).box().column()
-            layout = box.column(align=True)
-            layout.operator("mesh.corner", text='Corner').type_op = 0
-            layout.operator("mesh.corner", text='Extend').type_op = 1
-            coner_act = lt.corner_active_edge
-            coner_to_act = lt.to_corner_active_edge
-            row = layout.row(align=True)
-            if coner_to_act:
-                row.active = False
-                lt.corner_active_edge = False
-            row.prop(lt, "corner_active_edge", text='Only active edge')
-            row = layout.row(align=True)
-            if coner_act:
-                row.active = False
-                lt.to_corner_active_edge = False
-            row.prop(lt, "to_corner_active_edge", text='To active edge')
-
-            col_in = layout.column(align=True)
-            col_in.operator(AMCornerCross.bl_idname, text="Extend cross")
-            col_in.operator(AMExtendCross.bl_idname, text="Corner cross")
-            col_in.prop(lt, "corner_overlap", text="Overlap")
+        # split = col.split()
+        # if lt.disp_corner:
+        #     split.prop(lt, "disp_corner", text="Corner Edges", icon='DOWNARROW_HLT')
+        # else:
+        #     split.prop(lt, "disp_corner", text="Corner Edges", icon='RIGHTARROW')
+        #
+        # if lt.disp_corner:
+        #     box = col.column(align=True).box().column()
+        #     layout = box.column(align=True)
+        #     layout.operator("mesh.corner", text='Corner').type_op = 0
+        #     layout.operator("mesh.corner", text='Extend').type_op = 1
+        #     coner_act = lt.corner_active_edge
+        #     coner_to_act = lt.to_corner_active_edge
+        #     row = layout.row(align=True)
+        #     if coner_to_act:
+        #         row.active = False
+        #         lt.corner_active_edge = False
+        #     row.prop(lt, "corner_active_edge", text='Only active edge')
+        #     row = layout.row(align=True)
+        #     if coner_act:
+        #         row.active = False
+        #         lt.to_corner_active_edge = False
+        #     row.prop(lt, "to_corner_active_edge", text='To active edge')
+        #
+        #     col_in = layout.column(align=True)
+        #     col_in.operator(AMCornerCross.bl_idname, text="Extend cross")
+        #     col_in.operator(AMExtendCross.bl_idname, text="Corner cross")
+        #     col_in.prop(lt, "corner_overlap", text="Overlap")
 
         if context.mode == 'EDIT_MESH':
             split = col.split()
@@ -8189,9 +8257,9 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("paul.heavy_ngons", text='Heavy NGons')
             row = col_top.row(align=True)
             row.operator("paul.clean_glass", text='Clean Glass')
-            row = col_top.row(align=True)
-            row.operator("paul.verts_project_on_edge", text='Verts project')
-            row.prop(lt, "vproj_active", text='', icon='EDGESEL' if lt.vproj_active else 'MATCUBE')
+            # row = col_top.row(align=True)
+            # row.operator("paul.verts_project_on_edge", text='Verts project')
+            # row.prop(lt, "vproj_active", text='', icon='EDGESEL' if lt.vproj_active else 'MATCUBE')
 
 
         def _MISC():
@@ -11500,6 +11568,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_bremover = bpy.props.BoolProperty(name='disp_bremover', default=False)
     disp_inst_repl = bpy.props.BoolProperty(name='disp_inst_repl', default=False)
     display_edgloop = bpy.props.BoolProperty(name='display_edgloop', default=False, description='Tools about Edges and Loops')
+    disp_cad = bpy.props.BoolProperty(name='disp_cad', default=False)
 
     mborder_size = FloatProperty(name="mborder_size", default=0.1, precision=1, max=100, min=-100)
 
@@ -12061,6 +12130,9 @@ def register():
     bpy.context.window_manager.paul_manager.shape_inf = 0
     bpy.context.window_manager.paul_manager.ovr_count = 10
     bpy.context.window_manager.paul_manager.afas_angle = 0.2
+    bpy.context.window_manager.paul_manager.disp_cp = False
+    bpy.context.window_manager.paul_manager.disp_3drotor = False
+    bpy.context.window_manager.paul_manager.disp_corner = False
 
     bpy.types.Scene.batch_operator_settings = \
         bpy.props.PointerProperty(type=BatchOperatorSettings)
