@@ -7494,27 +7494,23 @@ def panel_add_spoiler(base_layout, prop, text):
         split.prop(lt, prop, text=text, icon='RIGHTARROW')
 
     if lt[prop]:
-        box = base_layout.column(align=True).box().column()
+        box = base_layout.column(align=False).box().column()
         col_top = box.column(align=True)
         return col_top
     return None
 
 
-def panel_add_button_and_box(base_layout, operator, text, spoiler, props, align=False):
+def panel_add_button_and_box(base_layout, operator, text, spoiler, align=False):
     lt = bpy.context.window_manager.paul_manager
     row = base_layout.row(align=align)
     row.operator(operator, text=text)
-    row.prop(lt, spoiler.name, text='', icon='DOWNARROW_HLT' if spoiler else 'RIGHTARROW')
-    if spoiler:
+    row.prop(lt, spoiler, text='', icon='DOWNARROW_HLT' if lt[spoiler] else 'RIGHTARROW')
+    if lt[spoiler]:
         row = base_layout.row(align=True)
         box2 = row.box().box()
         col2 = box2.column(align=True)
-        for prop in props:
-            row2 = col2.row(align=True)
-            row2.prop(lt, prop[0], text=prop[1])
         return col2
     return None
-
 
 
 class LayoutSSPanel(bpy.types.Panel):
@@ -7555,9 +7551,9 @@ class LayoutSSPanel(bpy.types.Panel):
         self.scene = scene
 
         layout = self.layout
-        col = layout.column(align=True)
+        col_main = layout.column(align=True)
 
-        lay_cad = panel_add_spoiler(base_layout=col, prop='disp_cad', text='CAD')
+        lay_cad = panel_add_spoiler(base_layout=col_main, prop='disp_cad', text='CAD')
         if lay_cad:
             lay_aligner = panel_add_spoiler(base_layout=lay_cad, prop='display_align', text='Aligner')
             if lay_aligner:
@@ -7726,8 +7722,96 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("paul.verts_project_on_edge", text='Verts project')
             row.prop(lt, "vproj_active", text='', icon='EDGESEL' if lt.vproj_active else 'MATCUBE')
 
+        lay_objed = panel_add_spoiler(base_layout=col_main, prop='disp_objed', text='Object/Edit')
+        if lay_objed:
+            col_top = lay_objed.column(align=True)
+            row = col_top.row(align=True)
+            row.operator("paul.instances_recount", text='Obj Verts report')
+            row.prop(lt, "disp_ovr", text='', icon='DOWNARROW_HLT' if lt.disp_ovr else 'RIGHTARROW')
+
+            if lt.disp_ovr:
+                row = col_top.row(align=True)
+                row2 = row.box().box()
+                row2.prop(lt, 'ovr_options', text='Sorting option')
+                row2 = row2.row(align=True)
+                row2.prop(lt, 'ovr_count')
+
+            row = lay_objed.row(align=True)
+            row_ = row.split(0.7, align=True)
+            row_.operator("object.misc", text='Obj switch on').type_op = 16
+            row_.operator("object.misc", text='off').type_op = 17
+            row.prop(lt, "oso_vizing", text='', icon='RESTRICT_VIEW_ON' if lt.oso_vizing else 'RESTRICT_VIEW_OFF')
+            row.prop(lt, "oso_select", text='', icon='RESTRICT_SELECT_ON' if lt.oso_select else 'RESTRICT_SELECT_OFF')
+            row.prop(lt, "oso_render", text='', icon='RESTRICT_RENDER_ON' if lt.oso_render else 'RESTRICT_RENDER_OFF')
+
+            lay_obj_compare = panel_add_spoiler(base_layout=lay_objed, prop='disp_compmeshes', text='Objects Compare')
+            if lay_obj_compare:
+                row = lay_obj_compare.column(align=True)
+                row.operator("object.compare_meshes", text='Read mats from active').type_op = 1
+                row = lay_obj_compare.column(align=True)
+                row.operator("object.compare_meshes", text='Compare vertices').type_op = 0
+                row = lay_obj_compare.column(align=False)
+                row.prop(lt, 'compmeshes_treshold', text='treshold')
+
+            row = lay_objed.row(align=True)
+            row.operator("object.misc", text='Obj select Modified').type_op = 6
+
+            row = lay_objed.row(align=True)
+            row.operator("paul.filter_dupes_origins", text='Obj Filter dupes')
+            row.prop(lt, "verts_activate", text='', icon='EDITMODE_HLT' if lt.verts_activate else 'MATCUBE')
+
+            row = lay_objed.row(align=True)
+            row.operator("paul.obj_filter_local_rotated", text='Obj Filter local rotated')
+
+            row = lay_objed.row(align=True)
+            row.operator("paul.obj_filter_neg_scale", text='Obj Filter negative scale')
+
+            row = lay_objed.row(align=True)
+            row.operator(PaNJoin.bl_idname, text='Negative join')
+
+            row = lay_objed.row(align=True)
+            row.operator("paul.set_autosmooth", text='Set Autosmooth')
+
+            row = lay_objed.row(align=True)
+            row.operator("object.misc", text='Curves select 2D').type_op = 1
+
+            row = lay_objed.row(align=True)
+            row.operator("object.misc", text='Curve swap 2D/3D').type_op = 3
+
+            lay_chunks = panel_add_button_and_box(base_layout=lay_objed, operator='mesh.sel_chunks',
+                                                  text='Select Chunks', spoiler='disp_chunks', align=True)
+            if lay_chunks:
+                col = lay_chunks.column(align=False)
+                row = col.row(align=False)
+                row.prop(lt, "chunks_clamp", text='clamp')
+                row = col.row(align=False)
+                row.prop(lt, "chunks_setting", text='Variant')
+
+            if context.mode == 'EDIT_MESH':
+                lay_dist_verts = panel_add_spoiler(base_layout=lay_objed, prop='disp_distverts', text='Dist Vertices')
+                if lay_dist_verts:
+                    row = lay_dist_verts.column(align=False)
+                    row.prop(lt, 'dist_verts', text='dist')
+                    row = lay_dist_verts.column(align=True)
+                    row.operator("mesh.dist_verts", text='Find doubles verts').type_op = 0
+                    row.operator("mesh.dist_verts", text='Select radius verts').type_op = 1
+
+            col = lay_objed.column(align=False)
+            row = col.row(align=True)
+            row.operator(PaVolumeSelect.bl_idname, text='Volume Select')
+            row.prop(lt, "valsel_objectmode", text='', icon='OBJECT_DATAMODE' if lt.valsel_objectmode
+                                                                                else 'EDITMODE_HLT')
 
 
+
+
+
+
+
+
+
+        col_top = col_main
+        col = col_main
         row = col.row(align=False)
         row.operator("mesh.simple_scale_operator", text='Get Orientation').type_op = 1
         row = col.row(align=False)
@@ -7855,36 +7939,6 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("mesh.projectloop", text='3DLoop')
 
 
-        # split = col.split()
-        # if lt.display_align:
-        #     split.prop(lt, "display_align", text="Aligner", icon='DOWNARROW_HLT')
-        # else:
-        #     split.prop(lt, "display_align", text="Aligner", icon='RIGHTARROW')
-        #
-        # if lt.display_align and context.mode == 'EDIT_MESH':
-        #     box = col.column(align=True).box().column()
-        #     col_top = box.column(align=True)
-        #     row = col_top.row(align=True)
-        #     row.operator("mesh.align_operator", text='Store Edge').type_op = 1
-        #     row = col_top.row(align=True)
-        #     align_op = row.operator("mesh.align_operator", text='Align').type_op = 0
-        #     row = col_top.row(align=True)
-        #     row.prop(lt, 'align_dist_z', text='Superpose')
-        #     row = col_top.row(align=True)
-        #     row.prop(lt, 'align_lock_z', text='lock Z')
-        #
-        # if lt.display_align and context.mode == 'OBJECT':
-        #     box = col.column(align=True).box().column()
-        #     col_top = box.column(align=True)
-        #     row = col_top.row(align=True)
-        #     row.operator("mesh.align_operator", text='Store Edge').type_op = 1
-        #     row = col_top.row(align=True)
-        #     align_op = row.operator("mesh.align_operator", text='Align').type_op = 2
-        #     col_top = box.column(align=True)
-        #     row = col_top.row(align=True)
-        #     row.prop(context.scene, 'AxesProperty', text='Axis')
-        #     row = col_top.row(align=True)
-        #     row.prop(context.scene, 'ProjectsProperty', text='Projection')
 
         if context.mode == 'OBJECT':
             split = col.split()
@@ -7958,11 +8012,6 @@ class LayoutSSPanel(bpy.types.Panel):
         if lt.disp_fedge:
             box = col.column(align=True).box().column()
             col_top = box.column(align=True)
-            # row = col_top.row(align=True)
-            # row.operator("object.fedge", text='fedge')
-            # if context.mode == 'OBJECT':
-            # row = col_top.row(align=True)
-            # row.prop(lt, 'fedge_empty', text = 'empty')
             row = col_top.row(align=True)
             row.prop(lt, 'fedge_verts', text='verts')
             row = col_top.row(align=True)
@@ -8020,80 +8069,6 @@ class LayoutSSPanel(bpy.types.Panel):
             layout.prop(lt, "axis_up_setting")
             layout.prop(lt, "image_search_setting")
 
-        split = col.split(percentage=0.15)
-        if lt.disp_chunks:
-            split.prop(lt, "disp_chunks", text="", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_chunks", text="", icon='RIGHTARROW')
-
-        split.operator("mesh.sel_chunks", text='Select Chunks')
-        if lt.disp_chunks:
-            box = col.column(align=True).box().column()
-            layout = box.column(align=True)
-            layout.prop(lt, "chunks_clamp", text='clamp')
-            layout = box.column(align=True)
-            layout.prop(lt, "chunks_setting", text='Variant')
-
-        # split = col.split()
-        # if lt.disp_corner:
-        #     split.prop(lt, "disp_corner", text="Corner Edges", icon='DOWNARROW_HLT')
-        # else:
-        #     split.prop(lt, "disp_corner", text="Corner Edges", icon='RIGHTARROW')
-        #
-        # if lt.disp_corner:
-        #     box = col.column(align=True).box().column()
-        #     layout = box.column(align=True)
-        #     layout.operator("mesh.corner", text='Corner').type_op = 0
-        #     layout.operator("mesh.corner", text='Extend').type_op = 1
-        #     coner_act = lt.corner_active_edge
-        #     coner_to_act = lt.to_corner_active_edge
-        #     row = layout.row(align=True)
-        #     if coner_to_act:
-        #         row.active = False
-        #         lt.corner_active_edge = False
-        #     row.prop(lt, "corner_active_edge", text='Only active edge')
-        #     row = layout.row(align=True)
-        #     if coner_act:
-        #         row.active = False
-        #         lt.to_corner_active_edge = False
-        #     row.prop(lt, "to_corner_active_edge", text='To active edge')
-        #
-        #     col_in = layout.column(align=True)
-        #     col_in.operator(AMCornerCross.bl_idname, text="Extend cross")
-        #     col_in.operator(AMExtendCross.bl_idname, text="Corner cross")
-        #     col_in.prop(lt, "corner_overlap", text="Overlap")
-
-        if context.mode == 'EDIT_MESH':
-            split = col.split()
-            if lt.disp_distverts:
-                split.prop(lt, "disp_distverts", text="Dist Vertices", icon='DOWNARROW_HLT')
-            else:
-                split.prop(lt, "disp_distverts", text="Dist Vertices", icon='RIGHTARROW')
-
-            if lt.disp_distverts:
-                box = col.column(align=True).box().column()
-                row = box.column(align=True)
-                row.prop(lt, 'dist_verts', text='dist')
-                row = box.column(align=True)
-                row.operator("mesh.dist_verts", text='Find doubles verts').type_op = 0
-                row.operator("mesh.dist_verts", text='Select radius verts').type_op = 1
-
-
-
-        split = col.split()
-        if lt.disp_compmeshes:
-            split.prop(lt, "disp_compmeshes", text="Objects Compare", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_compmeshes", text="Objects Compare", icon='RIGHTARROW')
-
-        if lt.disp_compmeshes:
-            box = col.column(align=True).box().column()
-            row = box.column(align=True)
-            row.operator("object.compare_meshes", text='Read mats from active').type_op = 1
-            row = box.column(align=True)
-            row.operator("object.compare_meshes", text='Compare vertices').type_op = 0
-            row = box.column(align=True)
-            row.prop(lt, 'compmeshes_treshold', text='treshold')
 
         def _RENDER():
             pass
@@ -8230,16 +8205,6 @@ class LayoutSSPanel(bpy.types.Panel):
         if lt.disp_blendupcleanup:
             box = col.column(align=True).box().column()
             col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("paul.instances_recount", text='Obj Verts report')
-            row.prop(lt, "disp_ovr", text='', icon='DOWNARROW_HLT' if lt.disp_ovr else 'RIGHTARROW')
-
-            if lt.disp_ovr:
-                row = col_top.row(align=True)
-                row2 = row.box().box()
-                row2.prop(lt, 'ovr_options', text='Sorting option')
-                row2 = row2.row(align=True)
-                row2.prop(lt, 'ovr_count')
 
             row = col_top.row(align=True)
             row.operator("paul.sel_same_verts", text='Select same vertices')
@@ -8247,19 +8212,11 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("paul.mats_datafix", text='Mats Datafix')
             row = col_top.row(align=True)
             row.operator("paul.mats_sel_multiple", text='Mats select multiple')
-            row = col_top.row(align=True)
-            row.operator("paul.obj_filter_neg_scale", text='Obj filter negative scale')
-            row = col_top.row(align=True)
-            row.operator("paul.obj_filter_local_rotated", text='Obj filter local rotated')
-            row = col_top.row(align=True)
-            row.operator("paul.set_autosmooth", text='Set Autosmooth')
+
             row = col_top.row(align=True)
             row.operator("paul.heavy_ngons", text='Heavy NGons')
             row = col_top.row(align=True)
             row.operator("paul.clean_glass", text='Clean Glass')
-            # row = col_top.row(align=True)
-            # row.operator("paul.verts_project_on_edge", text='Verts project')
-            # row.prop(lt, "vproj_active", text='', icon='EDGESEL' if lt.vproj_active else 'MATCUBE')
 
 
         def _MISC():
@@ -8294,30 +8251,7 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("object.misc", text='Matname HVS del').type_op = 10
             row = col_top.row(align=True)
             row.operator("object.misc", text='Matnodes switch').type_op = 7
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Obj select modified').type_op = 6
-            # row = col_top.row(align=True)
-            # row.operator("object.misc", text='Obj ignore instances').type_op=0
-            row = col_top.row(align=True)
-            row.operator("paul.filter_dupes_origins", text='Obj filter dupes')
-            row.prop(lt, "verts_activate", text='', icon='EDITMODE_HLT' \
-                if lt.verts_activate else 'MATCUBE')
 
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Curve select 2D').type_op = 1
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Curve swap 2D/3D').type_op = 3
-
-            row = col_top.row(align=True)
-            row_ = row.split(0.7, align=True)
-            row_.operator("object.misc", text='Obj switch on').type_op = 16
-            row_.operator("object.misc", text='off').type_op = 17
-            row.prop(lt, "oso_vizing", text='', icon='RESTRICT_VIEW_ON' \
-                if lt.oso_vizing else 'RESTRICT_VIEW_OFF')
-            row.prop(lt, "oso_select", text='', icon='RESTRICT_SELECT_ON' \
-                if lt.oso_select else 'RESTRICT_SELECT_OFF')
-            row.prop(lt, "oso_render", text='', icon='RESTRICT_RENDER_ON' \
-                if lt.oso_render else 'RESTRICT_RENDER_OFF')
 
         def _NAMINGINSTANCES():
             pass
@@ -8403,24 +8337,12 @@ class LayoutSSPanel(bpy.types.Panel):
             box = col.column(align=True).box().column()
             col_top = box.column(align=True)
 
-            row = col_top.row(align=True)
-            row.operator(PaVolumeSelect.bl_idname, text='Volume Select')
-            row.prop(lt, "valsel_objectmode", text='', icon='OBJECT_DATAMODE' \
-                if lt.valsel_objectmode else 'EDITMODE_HLT')
-
-            row = col_top.row(align=True)
-            row.operator(PaNJoin.bl_idname, text='Negative Join')
 
             row = col_top.row(align=True)
             row.operator("paul.instance_resizer", text='Instance Resizer')
 
             row = col_top.row(align=True)
             row.operator("paul.mats_equalize", text='Mats equalize')
-
-
-
-            # row = col_top.row(align=True)
-            # row.operator("paul.gsl", text='Group Select Linked')
 
             row = col_top.row(align=True)
             row.operator("paul.make_border", text='Make Border')
@@ -8436,9 +8358,6 @@ class LayoutSSPanel(bpy.types.Panel):
 
             row = col_top.row(align=True)
             row.operator("uv.scaler", text='UV Scaler')
-
-        # split = col.split()
-        # split.operator("script.paul_update_addon", text='Auto update')
 
 
 class D1_fedge(bpy.types.Operator):
@@ -11569,6 +11488,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_inst_repl = bpy.props.BoolProperty(name='disp_inst_repl', default=False)
     display_edgloop = bpy.props.BoolProperty(name='display_edgloop', default=False, description='Tools about Edges and Loops')
     disp_cad = bpy.props.BoolProperty(name='disp_cad', default=False)
+    disp_objed = bpy.props.BoolProperty(name='disp_objed', default=False)
 
     mborder_size = FloatProperty(name="mborder_size", default=0.1, precision=1, max=100, min=-100)
 
@@ -12133,6 +12053,9 @@ def register():
     bpy.context.window_manager.paul_manager.disp_cp = False
     bpy.context.window_manager.paul_manager.disp_3drotor = False
     bpy.context.window_manager.paul_manager.disp_corner = False
+    bpy.context.window_manager.paul_manager.disp_cad = False
+    bpy.context.window_manager.paul_manager.display_offset = False
+    bpy.context.window_manager.paul_manager.disp_objed = False
 
     bpy.types.Scene.batch_operator_settings = \
         bpy.props.PointerProperty(type=BatchOperatorSettings)
