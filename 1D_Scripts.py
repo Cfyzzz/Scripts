@@ -7494,7 +7494,7 @@ def panel_add_spoiler(base_layout, prop, text):
         split.prop(lt, prop, text=text, icon='RIGHTARROW')
 
     if lt[prop]:
-        box = base_layout.column(align=False).box().column()
+        box = base_layout.column(align=True).box().column(align=True)
         col_top = box.column(align=True)
         return col_top
     return None
@@ -7506,9 +7506,9 @@ def panel_add_button_and_box(base_layout, operator, text, spoiler, align=False):
     row.operator(operator, text=text)
     row.prop(lt, spoiler, text='', icon='DOWNARROW_HLT' if lt[spoiler] else 'RIGHTARROW')
     if lt[spoiler]:
-        row = base_layout.row(align=True)
+        row = base_layout.row()
         box2 = row.box().box()
-        col2 = box2.column(align=True)
+        col2 = box2.column()
         return col2
     return None
 
@@ -7569,12 +7569,12 @@ class LayoutSSPanel(bpy.types.Panel):
                     row.prop(lt, 'align_lock_z', text='lock Z')
 
                 if lt.display_align and context.mode == 'OBJECT':
-                    col_top = lay_aligner.column(align=True)
+                    col_top = lay_aligner.column(align=False)
                     row = col_top.row(align=True)
                     row.operator("mesh.align_operator", text='Store Edge').type_op = 1
                     row = col_top.row(align=True)
                     row.operator("mesh.align_operator", text='Align').type_op = 2
-                    col_top = lay_aligner.column(align=False)
+                    col_top = col_top.column(align=False)
                     row = col_top.row(align=True)
                     row.prop(context.scene, 'AxesProperty', text='Axis')
                     row = col_top.row(align=True)
@@ -7802,8 +7802,56 @@ class LayoutSSPanel(bpy.types.Panel):
             row.prop(lt, "valsel_objectmode", text='', icon='OBJECT_DATAMODE' if lt.valsel_objectmode
                                                                                 else 'EDITMODE_HLT')
 
+        lay_misc = panel_add_spoiler(base_layout=col_main, prop='disp_materials', text='Materials')
+        if lay_misc:
+            col_top = lay_misc.column(align=True)
+            row = col_top.row(align=True)
+            row.operator("paul.mats_datafix", text='Mats Datafix')
+            row = col_top.row(align=True)
+            row.operator("paul.mats_sel_multiple", text='Mats select multiple')
 
+        lay_build = panel_add_spoiler(base_layout=col_main, prop='disp_build', text='Build')
+        if lay_build:
+            if context.mode == 'OBJECT':
+                lay_railer = panel_add_spoiler(base_layout=lay_build, prop='display_railer', text='Railer')
+                if lay_railer:
+                    col_top = lay_railer.column(align=True)
+                    row = col_top.row(align=True)
 
+                    row.prop(context.scene, 'path_obj', icon='OBJECT_DATAMODE')
+                    row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 1
+                    row = col_top.row(align=True)
+                    row.prop(context.scene, 'corner_obj', icon='OBJECT_DATAMODE')
+                    row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 2
+                    row = col_top.row(align=True)
+                    row.prop(context.scene, 'linear_obj', icon='OBJECT_DATAMODE')
+                    row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 3
+
+                    col_top = lay_railer.column(align=True)
+                    row = col_top.row(align=False)
+                    row.prop(lt, 'railer_dist', text='dist')
+
+                    col_top = lay_railer.column(align=True)
+                    row = col_top.row(align=True)
+                    row.operator("object.railer_operator", text='Build').type_op = 4
+
+            row = lay_build.row(align=True)
+            row.operator("paul.make_border", text='Make Border')
+            row.prop(lt, "disp_mborder", text='', icon='DOWNARROW_HLT' if lt.disp_mborder else 'RIGHTARROW')
+            if lt.disp_mborder:
+                row = lay_build.row(align=True)
+                row2 = row.box()
+                row2.prop(lt, 'mborder_size', text='Size')
+
+            row = lay_build.row(align=True)
+            row.operator("paul.stairs_maker", text='Stairs Maker')
+
+            lay_wall_extrude = panel_add_spoiler(base_layout=lay_build, prop='disp_matExtrude', text='Railer')
+            if lay_wall_extrude:
+                row = lay_wall_extrude.row(align=True)
+                row.operator("mesh.get_mat4extrude", text='Get Mats')
+                row = lay_wall_extrude.row(align=True)
+                row.operator("mesh.mat_extrude", text='Template Extrude')
 
 
 
@@ -7940,50 +7988,50 @@ class LayoutSSPanel(bpy.types.Panel):
 
 
 
-        if context.mode == 'OBJECT':
-            split = col.split()
-            if lt.display_railer:
-                split.prop(lt, "display_railer", text="Railer", icon='DOWNARROW_HLT')
-            else:
-                split.prop(lt, "display_railer", text="Railer", icon='RIGHTARROW')
+        # if context.mode == 'OBJECT':
+        #     split = col.split()
+        #     if lt.display_railer:
+        #         split.prop(lt, "display_railer", text="Railer", icon='DOWNARROW_HLT')
+        #     else:
+        #         split.prop(lt, "display_railer", text="Railer", icon='RIGHTARROW')
+        #
+        #     if lt.display_railer:
+        #         box = col.column(align=True).box().column()
+        #         col_top = box.column(align=True)
+        #         row = col_top.row(align=True)
+        #
+        #         row.prop(context.scene, 'path_obj', icon='OBJECT_DATAMODE')
+        #         row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 1
+        #         row = col_top.row(align=True)
+        #         row.prop(context.scene, 'corner_obj', icon='OBJECT_DATAMODE')
+        #         row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 2
+        #         row = col_top.row(align=True)
+        #         row.prop(context.scene, 'linear_obj', icon='OBJECT_DATAMODE')
+        #         row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 3
+        #
+        #         col_top = box.column(align=True)
+        #         row = col_top.row(align=True)
+        #         row.prop(lt, 'railer_dist', text='dist')
+        #
+        #         col_top = box.column(align=True)
+        #         row = col_top.row(align=True)
+        #         row.operator("object.railer_operator", text='Build').type_op = 4
 
-            if lt.display_railer:
-                box = col.column(align=True).box().column()
-                col_top = box.column(align=True)
-                row = col_top.row(align=True)
-
-                row.prop(context.scene, 'path_obj', icon='OBJECT_DATAMODE')
-                row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 1
-                row = col_top.row(align=True)
-                row.prop(context.scene, 'corner_obj', icon='OBJECT_DATAMODE')
-                row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 2
-                row = col_top.row(align=True)
-                row.prop(context.scene, 'linear_obj', icon='OBJECT_DATAMODE')
-                row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 3
-
-                col_top = box.column(align=True)
-                row = col_top.row(align=True)
-                row.prop(lt, 'railer_dist', text='dist')
-
-                col_top = box.column(align=True)
-                row = col_top.row(align=True)
-                row.operator("object.railer_operator", text='Build').type_op = 4
 
 
-
-        split = col.split()
-        if lt.disp_matExtrude:
-            split.prop(lt, "disp_matExtrude", text="WallExtrude", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_matExtrude", text="WallExtrude", icon='RIGHTARROW')
-
-        if lt.disp_matExtrude:
-            box = col.column(align=True).box().column()
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("mesh.get_mat4extrude", text='Get Mats')
-            row = col_top.row(align=True)
-            row.operator("mesh.mat_extrude", text='Template Extrude')
+        # split = col.split()
+        # if lt.disp_matExtrude:
+        #     split.prop(lt, "disp_matExtrude", text="WallExtrude", icon='DOWNARROW_HLT')
+        # else:
+        #     split.prop(lt, "disp_matExtrude", text="WallExtrude", icon='RIGHTARROW')
+        #
+        # if lt.disp_matExtrude:
+        #     box = col.column(align=True).box().column()
+        #     col_top = box.column(align=True)
+        #     row = col_top.row(align=True)
+        #     row.operator("mesh.get_mat4extrude", text='Get Mats')
+        #     row = col_top.row(align=True)
+        #     row.operator("mesh.mat_extrude", text='Template Extrude')
 
 
 
@@ -8208,10 +8256,10 @@ class LayoutSSPanel(bpy.types.Panel):
 
             row = col_top.row(align=True)
             row.operator("paul.sel_same_verts", text='Select same vertices')
-            row = col_top.row(align=True)
-            row.operator("paul.mats_datafix", text='Mats Datafix')
-            row = col_top.row(align=True)
-            row.operator("paul.mats_sel_multiple", text='Mats select multiple')
+            # row = col_top.row(align=True)
+            # row.operator("paul.mats_datafix", text='Mats Datafix')
+            # row = col_top.row(align=True)
+            # row.operator("paul.mats_sel_multiple", text='Mats select multiple')
 
             row = col_top.row(align=True)
             row.operator("paul.heavy_ngons", text='Heavy NGons')
@@ -8344,17 +8392,17 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.operator("paul.mats_equalize", text='Mats equalize')
 
-            row = col_top.row(align=True)
-            row.operator("paul.make_border", text='Make Border')
-            row.prop(lt, "disp_mborder", text='', icon='DOWNARROW_HLT' \
-                if lt.disp_mborder else 'RIGHTARROW')
-            if lt.disp_mborder:
-                row = col_top.row(align=True)
-                row2 = row.box().box()
-                row2.prop(lt, 'mborder_size', text='Size')
+            # row = col_top.row(align=True)
+            # row.operator("paul.make_border", text='Make Border')
+            # row.prop(lt, "disp_mborder", text='', icon='DOWNARROW_HLT' \
+            #     if lt.disp_mborder else 'RIGHTARROW')
+            # if lt.disp_mborder:
+            #     row = col_top.row(align=True)
+            #     row2 = row.box().box()
+            #     row2.prop(lt, 'mborder_size', text='Size')
 
-            row = col_top.row(align=True)
-            row.operator("paul.stairs_maker", text='Stairs Maker')
+            # row = col_top.row(align=True)
+            # row.operator("paul.stairs_maker", text='Stairs Maker')
 
             row = col_top.row(align=True)
             row.operator("uv.scaler", text='UV Scaler')
@@ -11489,6 +11537,8 @@ class paul_managerProps(bpy.types.PropertyGroup):
     display_edgloop = bpy.props.BoolProperty(name='display_edgloop', default=False, description='Tools about Edges and Loops')
     disp_cad = bpy.props.BoolProperty(name='disp_cad', default=False)
     disp_objed = bpy.props.BoolProperty(name='disp_objed', default=False)
+    disp_build = bpy.props.BoolProperty(name='disp_build', default=False)
+    disp_materials = bpy.props.BoolProperty(name='disp_materials', default=False)
 
     mborder_size = FloatProperty(name="mborder_size", default=0.1, precision=1, max=100, min=-100)
 
@@ -12056,6 +12106,10 @@ def register():
     bpy.context.window_manager.paul_manager.disp_cad = False
     bpy.context.window_manager.paul_manager.display_offset = False
     bpy.context.window_manager.paul_manager.disp_objed = False
+    bpy.context.window_manager.paul_manager.disp_build = False
+    bpy.context.window_manager.paul_manager.disp_compmeshes = False
+    bpy.context.window_manager.paul_manager.disp_chunks = False
+    bpy.context.window_manager.paul_manager.disp_materials = False
 
     bpy.types.Scene.batch_operator_settings = \
         bpy.props.PointerProperty(type=BatchOperatorSettings)
