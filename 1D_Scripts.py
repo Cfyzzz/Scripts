@@ -7553,6 +7553,9 @@ class LayoutSSPanel(bpy.types.Panel):
         layout = self.layout
         col_main = layout.column(align=True)
 
+        row = col_main.row(align=False)
+        row.operator("mesh.simple_scale_operator", text='Get Orientation').type_op = 1
+
         lay_cad = panel_add_spoiler(base_layout=col_main, prop='disp_cad', text='CAD')
         if lay_cad:
             lay_aligner = panel_add_spoiler(base_layout=lay_cad, prop='display_align', text='Aligner')
@@ -7809,6 +7812,26 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("paul.mats_datafix", text='Mats Datafix')
             row = col_top.row(align=True)
             row.operator("paul.mats_sel_multiple", text='Mats select multiple')
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='MatchProp').type_op = 13
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Mats all to active').type_op = 8
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Mats selected to active').type_op = 14
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Mats sort').type_op = 15
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Mats suppress RGB').type_op = 4
+            row = col_top.row(align=True)
+            row.operator("paul.mats_unclone", text='Mats Unclone')
+            row = col_top.row(align=True)
+            row.operator("paul.mats_purgeout", text='Mats Purgeout')
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Matname HVS set').type_op = 9
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Matname HVS del').type_op = 10
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Matnodes switch').type_op = 7
 
         lay_build = panel_add_spoiler(base_layout=col_main, prop='disp_build', text='Build')
         if lay_build:
@@ -7835,6 +7858,7 @@ class LayoutSSPanel(bpy.types.Panel):
                     row = col_top.row(align=True)
                     row.operator("object.railer_operator", text='Build').type_op = 4
 
+
             row = lay_build.row(align=True)
             row.operator("paul.make_border", text='Make Border')
             row.prop(lt, "disp_mborder", text='', icon='DOWNARROW_HLT' if lt.disp_mborder else 'RIGHTARROW')
@@ -7860,8 +7884,6 @@ class LayoutSSPanel(bpy.types.Panel):
 
         col_top = col_main
         col = col_main
-        row = col.row(align=False)
-        row.operator("mesh.simple_scale_operator", text='Get Orientation').type_op = 1
         row = col.row(align=False)
         row.operator("mesh.simple_scale_operator", text='XYcollapse').type_op = 0
 
@@ -8247,9 +8269,9 @@ class LayoutSSPanel(bpy.types.Panel):
 
         split = col.split()
         if lt.disp_blendupcleanup:
-            split.prop(lt, "disp_blendupcleanup", text="Blendup Cleanup", icon='DOWNARROW_HLT')
+            split.prop(lt, "disp_blendupcleanup", text="Misc", icon='DOWNARROW_HLT')
         else:
-            split.prop(lt, "disp_blendupcleanup", text="Blendup Cleanup", icon='RIGHTARROW')
+            split.prop(lt, "disp_blendupcleanup", text="Misc", icon='RIGHTARROW')
         if lt.disp_blendupcleanup:
             box = col.column(align=True).box().column()
             col_top = box.column(align=True)
@@ -8267,38 +8289,38 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("paul.clean_glass", text='Clean Glass')
 
 
-        def _MISC():
-            pass
+        # def _MISC():
+        #     pass
 
-        split = col.split()
-        if lt.disp_misc:
-            split.prop(lt, "disp_misc", text="Misc", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_misc", text="Misc", icon='RIGHTARROW')
-
-        if lt.disp_misc:
-            box = col.column(align=True).box().column()
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='MatchProp').type_op = 13
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats all to active').type_op = 8
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats selected to active').type_op = 14
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats sort').type_op = 15
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats suppress RGB').type_op = 4
-            row = col_top.row(align=True)
-            row.operator("paul.mats_unclone", text='Mats Unclone')
-            row = col_top.row(align=True)
-            row.operator("paul.mats_purgeout", text='Mats Purgeout')
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Matname HVS set').type_op = 9
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Matname HVS del').type_op = 10
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Matnodes switch').type_op = 7
+        # split = col.split()
+        # if lt.disp_misc:
+        #     split.prop(lt, "disp_misc", text="Misc", icon='DOWNARROW_HLT')
+        # else:
+        #     split.prop(lt, "disp_misc", text="Misc", icon='RIGHTARROW')
+        #
+        # if lt.disp_misc:
+        #     box = col.column(align=True).box().column()
+        #     col_top = box.column(align=True)
+            # row = col_top.row(align=True)
+            # row.operator("object.misc", text='MatchProp').type_op = 13
+            # row = col_top.row(align=True)
+            # row.operator("object.misc", text='Mats all to active').type_op = 8
+            # row = col_top.row(align=True)
+            # row.operator("object.misc", text='Mats selected to active').type_op = 14
+            # row = col_top.row(align=True)
+            # row.operator("object.misc", text='Mats sort').type_op = 15
+            # row = col_top.row(align=True)
+            # row.operator("object.misc", text='Mats suppress RGB').type_op = 4
+            # row = col_top.row(align=True)
+            # row.operator("paul.mats_unclone", text='Mats Unclone')
+            # row = col_top.row(align=True)
+            # row.operator("paul.mats_purgeout", text='Mats Purgeout')
+            # row = col_top.row(align=True)
+            # row.operator("object.misc", text='Matname HVS set').type_op = 9
+            # row = col_top.row(align=True)
+            # row.operator("object.misc", text='Matname HVS del').type_op = 10
+            # row = col_top.row(align=True)
+            # row.operator("object.misc", text='Matnodes switch').type_op = 7
 
 
         def _NAMINGINSTANCES():
@@ -11139,7 +11161,7 @@ class PaVolumeSelect(bpy.types.Operator):
         return {'FINISHED'}
 
 class PaVertsProjectOnEdge(bpy.types.Operator):
-    r"""Проекция вершин выделенных ребер на первое или активное ребро"""
+    """split edge by perpendicular projection of other edges"""
     bl_idname = "paul.verts_project_on_edge"
     bl_label = "Vverts project"
     bl_options = {'REGISTER', 'UNDO'}
@@ -11435,9 +11457,9 @@ class paul_managerProps(bpy.types.PropertyGroup):
     bpy.context.window_manager.paul_manager
     """
     display = bpy.props.BoolProperty(name='display')
-    display_align = bpy.props.BoolProperty(name='display_align')
-    display_offset = bpy.props.BoolProperty(name='display_offset')
-    display_3dmatch = bpy.props.BoolProperty(name='display_3dmatch')
+    display_align = bpy.props.BoolProperty(name='display_align', description="Align selection to active edge")
+    display_offset = bpy.props.BoolProperty(name='display_offset', description="store and reuse distance for modification")
+    display_3dmatch = bpy.props.BoolProperty(name='display_3dmatch', description="3point alignation by key")
     display_railer = bpy.props.BoolProperty(name='display_railer')
 
     loopreduce_step = bpy.props.IntProperty(name='Step', default=5, min=1)
@@ -11491,7 +11513,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     filter_edges = bpy.props.BoolProperty(name='filter_edges', default=False)
     filter_verts_top = bpy.props.BoolProperty(name='filter_verts_top', default=False)
     filter_verts_bottom = bpy.props.BoolProperty(name='filter_verts_bottom', default=False)
-    disp_cp = bpy.props.BoolProperty(name='disp_cp', default=False)
+    disp_cp = bpy.props.BoolProperty(name='disp_cp', default=False, description="slice object with custom plane")
     disp_cp_project = bpy.props.BoolProperty(name='disp_cp_project', default=False)
     disp_cp_filter = bpy.props.BoolProperty(name='disp_cp_filter', default=False)
     filter_mats = bpy.props.BoolProperty(name='filter_mats', default=False)
@@ -11508,10 +11530,10 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_eap = bpy.props.BoolProperty(name='disp_eap', default=False)
     disp_fedge = bpy.props.BoolProperty(name='disp_fedge', default=False)
     disp_coll = bpy.props.BoolProperty(name='disp_coll', default=False)
-    disp_3drotor = bpy.props.BoolProperty(name='disp_3drotor', default=False)
+    disp_3drotor = bpy.props.BoolProperty(name='disp_3drotor', default=False, description="manipulate object with key")
     disp_obj = bpy.props.BoolProperty(name='disp_obj', default=False)
     disp_chunks = bpy.props.BoolProperty(name='disp_chunks', default=False)
-    disp_corner = bpy.props.BoolProperty(name='disp_corner', default=False)
+    disp_corner = bpy.props.BoolProperty(name='disp_corner', default=False, description="lengthen or split edges by projections")
     disp_reduce = bpy.props.BoolProperty(name='disp_reduce', default=False)
     disp_sel = bpy.props.BoolProperty(name='disp_sel', default=False, description='Set length of selected edges equal to stored in Sideshift ')
     disp_zmj100 = bpy.props.BoolProperty(name='disp_zmj100', default=False)
@@ -12110,6 +12132,8 @@ def register():
     bpy.context.window_manager.paul_manager.disp_compmeshes = False
     bpy.context.window_manager.paul_manager.disp_chunks = False
     bpy.context.window_manager.paul_manager.disp_materials = False
+    bpy.context.window_manager.paul_manager.display_railer = False
+    bpy.context.window_manager.paul_manager.disp_matExtrude = False
 
     bpy.types.Scene.batch_operator_settings = \
         bpy.props.PointerProperty(type=BatchOperatorSettings)
