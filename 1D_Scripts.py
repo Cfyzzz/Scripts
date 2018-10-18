@@ -3811,8 +3811,6 @@ def main_rotor(angle_):
             rot_inv = rot_.to_matrix().to_4x4().inverted()
 
             obj.matrix_world *= rot_inv
-            # obj.rotation_euler = mathutils.Euler((0,0,0),'XYZ')
-            # bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
             mat_out = mat_loc * mat_rot * mat_loc2
             obj.matrix_world = obj.matrix_world * mat_out * rot_.to_matrix().to_4x4()
     return True
@@ -3826,7 +3824,6 @@ def GetDistToCursor():
     obj = bpy.context.active_object
     cursor_location = location_3Dcursor()
     if obj:
-        # d_pos = bpy.context.scene.cursor_location - obj.location
         d_pos = cursor_location - obj.location
         center = mathutils.Vector((0, 0, 0))
 
@@ -7990,9 +7987,9 @@ class LayoutSSPanel(bpy.types.Panel):
                 row2 = row.box().box()
                 row2.prop(lt, 'pairfill_options', text='Method')
 
-            # Loop reduce
+            # Ring reduce
             row = col_top.row(align=True)
-            row.operator("paul.loop_reduce", text='Loop reduce')
+            row.operator("paul.loop_reduce", text='Ring Reduce')
             row.prop(lt, "disp_loopreduce", text='', icon='DOWNARROW_HLT' if lt.disp_loopreduce else 'RIGHTARROW')
             if lt.disp_loopreduce:
                 row = col_top.row(align=True)
@@ -8002,49 +7999,6 @@ class LayoutSSPanel(bpy.types.Panel):
             # 3DLoop
             row = col_top.row(align=True)
             row.operator("mesh.projectloop", text='3DLoop')
-
-        # if context.mode == 'OBJECT':
-        #     split = col.split()
-        #     if lt.display_railer:
-        #         split.prop(lt, "display_railer", text="Railer", icon='DOWNARROW_HLT')
-        #     else:
-        #         split.prop(lt, "display_railer", text="Railer", icon='RIGHTARROW')
-        #
-        #     if lt.display_railer:
-        #         box = col.column(align=True).box().column()
-        #         col_top = box.column(align=True)
-        #         row = col_top.row(align=True)
-        #
-        #         row.prop(context.scene, 'path_obj', icon='OBJECT_DATAMODE')
-        #         row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 1
-        #         row = col_top.row(align=True)
-        #         row.prop(context.scene, 'corner_obj', icon='OBJECT_DATAMODE')
-        #         row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 2
-        #         row = col_top.row(align=True)
-        #         row.prop(context.scene, 'linear_obj', icon='OBJECT_DATAMODE')
-        #         row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 3
-        #
-        #         col_top = box.column(align=True)
-        #         row = col_top.row(align=True)
-        #         row.prop(lt, 'railer_dist', text='dist')
-        #
-        #         col_top = box.column(align=True)
-        #         row = col_top.row(align=True)
-        #         row.operator("object.railer_operator", text='Build').type_op = 4
-
-        # split = col.split()
-        # if lt.disp_matExtrude:
-        #     split.prop(lt, "disp_matExtrude", text="WallExtrude", icon='DOWNARROW_HLT')
-        # else:
-        #     split.prop(lt, "disp_matExtrude", text="WallExtrude", icon='RIGHTARROW')
-        #
-        # if lt.disp_matExtrude:
-        #     box = col.column(align=True).box().column()
-        #     col_top = box.column(align=True)
-        #     row = col_top.row(align=True)
-        #     row.operator("mesh.get_mat4extrude", text='Get Mats')
-        #     row = col_top.row(align=True)
-        #     row.operator("mesh.mat_extrude", text='Template Extrude')
 
         split = col.split()
         if lt.disp_bremover:
@@ -8264,48 +8218,12 @@ class LayoutSSPanel(bpy.types.Panel):
 
             row = col_top.row(align=True)
             row.operator("paul.sel_same_verts", text='Select same vertices')
-            # row = col_top.row(align=True)
-            # row.operator("paul.mats_datafix", text='Mats Datafix')
-            # row = col_top.row(align=True)
-            # row.operator("paul.mats_sel_multiple", text='Mats select multiple')
 
             row = col_top.row(align=True)
             row.operator("paul.heavy_ngons", text='Heavy NGons')
             row = col_top.row(align=True)
             row.operator("paul.clean_glass", text='Clean Glass')
 
-        # def _MISC():
-        #     pass
-
-        # split = col.split()
-        # if lt.disp_misc:
-        #     split.prop(lt, "disp_misc", text="Misc", icon='DOWNARROW_HLT')
-        # else:
-        #     split.prop(lt, "disp_misc", text="Misc", icon='RIGHTARROW')
-        #
-        # if lt.disp_misc:
-        #     box = col.column(align=True).box().column()
-        #     col_top = box.column(align=True)
-        # row = col_top.row(align=True)
-        # row.operator("object.misc", text='MatchProp').type_op = 13
-        # row = col_top.row(align=True)
-        # row.operator("object.misc", text='Mats all to active').type_op = 8
-        # row = col_top.row(align=True)
-        # row.operator("object.misc", text='Mats selected to active').type_op = 14
-        # row = col_top.row(align=True)
-        # row.operator("object.misc", text='Mats sort').type_op = 15
-        # row = col_top.row(align=True)
-        # row.operator("object.misc", text='Mats suppress RGB').type_op = 4
-        # row = col_top.row(align=True)
-        # row.operator("paul.mats_unclone", text='Mats Unclone')
-        # row = col_top.row(align=True)
-        # row.operator("paul.mats_purgeout", text='Mats Purgeout')
-        # row = col_top.row(align=True)
-        # row.operator("object.misc", text='Matname HVS set').type_op = 9
-        # row = col_top.row(align=True)
-        # row.operator("object.misc", text='Matname HVS del').type_op = 10
-        # row = col_top.row(align=True)
-        # row.operator("object.misc", text='Matnodes switch').type_op = 7
 
         def _NAMINGINSTANCES():
             pass
@@ -8397,18 +8315,6 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.operator("paul.mats_equalize", text='Mats equalize')
 
-            # row = col_top.row(align=True)
-            # row.operator("paul.make_border", text='Make Border')
-            # row.prop(lt, "disp_mborder", text='', icon='DOWNARROW_HLT' \
-            #     if lt.disp_mborder else 'RIGHTARROW')
-            # if lt.disp_mborder:
-            #     row = col_top.row(align=True)
-            #     row2 = row.box().box()
-            #     row2.prop(lt, 'mborder_size', text='Size')
-
-            # row = col_top.row(align=True)
-            # row.operator("paul.stairs_maker", text='Stairs Maker')
-
             row = col_top.row(align=True)
             row.operator("uv.scaler", text='UV Scaler')
 
@@ -8462,8 +8368,6 @@ class D1_fedge(bpy.types.Operator):
         for p in pols:
             if p.area <= WRONG_AREA and zerop:
                 return True
-            # if len(p.vertices) == 3 and three:
-            #    return True
         return False
 
     def make_loose_angle(self, obj):
@@ -8664,7 +8568,6 @@ class D1_fedge(bpy.types.Operator):
         return selected_show, selected_hide
 
     def select_loose_objt(self):
-        # print('enter in select_loose_objt')
         config = bpy.context.window_manager.paul_manager
         objects = [o for o in bpy.context.selected_objects]
         if not objects:
@@ -8778,15 +8681,12 @@ class D1_fedge(bpy.types.Operator):
         # object mode if mesh clean
         if mess_info:
             mess_info = 'FEDGE: ' + mess_info
-            self.report({'INFO'}, \
-                        mess_info)
+            self.report({'INFO'}, mess_info)
         elif selected_hide:
-            self.report({'INFO'}, \
-                        'FEDGE: Nothing found (but hidden)')
+            self.report({'INFO'}, 'FEDGE: Nothing found (but hidden)')
         else:
             bpy.ops.object.editmode_toggle()
-            self.report({'INFO'}, \
-                        'FEDGE: Your object is clean')
+            self.report({'INFO'}, 'FEDGE: Your object is clean')
 
     def execute(self, context):
         if bpy.context.mode == 'OBJECT':
@@ -9497,8 +9397,7 @@ class PaSideShiftStoreDist(bpy.types.Operator):
     def execute(self, context):
         config = bpy.context.window_manager.paul_manager
         bpy.ops.mesh.align_operator(type_op=1)
-        self.report({'INFO'}, \
-                    'dist: ' + str(round(config.step_len, 4)))
+        self.report({'INFO'}, 'dist: ' + str(round(config.step_len, 4)))
         return {'FINISHED'}
 
 
@@ -10063,8 +9962,6 @@ class AlignOperator(bpy.types.Operator):
             resfunc = main_align()
         elif self.type_op == 2:
             scene = bpy.context.scene
-            # for obj_a in bpy.context.selected_objects:
-            #        bpy.context.scene.objects.active = obj_a
             resfunc = main_align_object(scene.AxesProperty, scene.ProjectsProperty)
         elif self.type_op == 3:
             # Store Vert
@@ -10383,8 +10280,7 @@ class RotorOperator(bpy.types.Operator):
                     '''
                     self.report({'INFO'}, \
                         str(edgel[0])+'/'+str(edgel[1])+'='+str(ko1)+'/'+str(ko2))'''
-                    self.report({'INFO'}, \
-                                str(str(ko1) + '/' + str(ko2) + ' ang=' + str(ang)))
+                    self.report({'INFO'}, str(str(ko1) + '/' + str(ko2) + ' ang=' + str(ang)))
                     resfunc = True
                 else:
                     resfunc = False
@@ -10997,8 +10893,6 @@ class PaInstancesRename(bpy.types.Operator):
             else:
                 instance_group[m_name].append(o_name)
 
-        # bpy.ops.object.select_all(action="DESELECT")
-        # act_obj.select=True
         for key, instances in instance_group.items():
             if key == act_key: continue
             name = act_obj.name + cou()
@@ -11014,8 +10908,6 @@ class PaInstancesRename(bpy.types.Operator):
         for ob in bpy.context.selected_objects:
             if ob.type == 'MESH':
                 ob.name = ob.data.name
-
-            # bpy.data.objects[instances[0]].select=True
 
         return {'FINISHED'}
 
