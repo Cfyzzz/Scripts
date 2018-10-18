@@ -1210,12 +1210,13 @@ class BTBatchRemoverMixin(BTBatchOperatorMixin):
         filter_object method to define what objects to process
         process_object method to define what to do with each object
     """
+
     class OPERATOR_TYPE_ENUM:
         do_select = 'DO_SELECT'
         do_remove = 'DO_REMOVE'
 
-    operator_type = bpy.props.EnumProperty(items=((OPERATOR_TYPE_ENUM.do_remove, )*3,
-                                                  (OPERATOR_TYPE_ENUM.do_select, )*3),
+    operator_type = bpy.props.EnumProperty(items=((OPERATOR_TYPE_ENUM.do_remove,) * 3,
+                                                  (OPERATOR_TYPE_ENUM.do_select,) * 3),
                                            options={'HIDDEN'})
 
     @classmethod
@@ -1271,7 +1272,7 @@ class BTBatchUVMapsEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
 class BTBatchVertexGroupEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
     bl_idname = 'object.vertex_groups_eraser'
     bl_label = 'Vertex Groups Batch Remove'
-    bl_description = 'Removes Vertex Groups from '\
+    bl_description = 'Removes Vertex Groups from ' \
                      'selected or all objects in scene'
     dropdown_name = 'Vertex Groups'
 
@@ -1365,7 +1366,7 @@ class BTBatchGPencilEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
 class BTAllModifiersEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
     bl_idname = 'object.all_modifiers_eraser'
     bl_label = 'All Modifiers Batch Remove'
-    bl_description = 'Removes All Modifiers from '\
+    bl_description = 'Removes All Modifiers from ' \
                      'selected or all objects in scene'
     dropdown_name = 'All Modifiers'
 
@@ -1384,7 +1385,7 @@ class BTAllModifiersEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
 class BTAllSubsurfsEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
     bl_idname = 'object.all_subsurfs_eraser'
     bl_label = 'All Subsurfs Batch Remove'
-    bl_description = 'Removes All Subsurfs from selected '\
+    bl_description = 'Removes All Subsurfs from selected ' \
                      'or all objects in scene'
     dropdown_name = 'All Subsurfs'
 
@@ -1407,7 +1408,7 @@ class BTAllSubsurfsEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
 class BTZeroSubsurfsEraserOperator(BTBatchRemoverMixin, bpy.types.Operator):
     bl_idname = 'object.zero_subsurfs_eraser'
     bl_label = 'Zero Subsurfs Batch Remove'
-    bl_description = 'Removes Subsurfs with view 0 from '\
+    bl_description = 'Removes Subsurfs with view 0 from ' \
                      'selected or all objects in scene'
     dropdown_name = 'Zero Subsurfs'
 
@@ -7391,13 +7392,13 @@ def render_me(filepath):
                         str(round(p_tmp_scale / sq_backet)) + '\n'
 
     file_stat.write('Total resolution = ' + str(round(math.sqrt(progress))) + 'x' + str(round(math.sqrt(progress))) +
-                 ' (' + str(round(math.sqrt(progress) * rp / 100)) + 'x' + str(
+                    ' (' + str(round(math.sqrt(progress) * rp / 100)) + 'x' + str(
         round(math.sqrt(progress) * rp / 100)) + ')' + '\n')
     file_stat.write('Default Resolution = ' + str(glob_res[0]) + 'x' + str(glob_res[1]) + ' (' + str(rp) + '%)' + '\n')
     file_stat.write('Tiles = ' + str(backet_x) + 'x' + str(backet_y) + '\n')
     file_stat.write('Total tiles = ' + str(round(progress * rp / (sq_backet * 100))) + '\n\n')
     file_stat.write('Cameras:\n' + 'Name | resolution | scaled (' + str(rp) + '%) | tiles\n' +
-                 '________________________________________\n')
+                    '________________________________________\n')
     file_stat.write(sline)
 
     outputfile = os.path.join(filepath, 'log.txt')
@@ -7407,7 +7408,7 @@ def render_me(filepath):
     file_log = open(outputfile, 'a', encoding='utf8')
     file_log.write('Cameras:\n' + 'Name | resolution | scaled (' + str(
         rp) + '%) | progress % | remaining time | elapsed time\n' + \
-                 '_____________________________________________________________________________\n')
+                   '_____________________________________________________________________________\n')
 
     p_tmp = 0
     time_start = time.time()
@@ -7432,8 +7433,8 @@ def render_me(filepath):
             s_rt = time.strftime('%H:%M:%S', time.gmtime(r_time))
             s_lt = time.strftime('%H:%M:%S', time.gmtime(time_tmp))
             file_log.write(cam.name + ' | ' + str(camsi[i][0]) + 'x' + str(camsi[i][1]) + ' | ' + \
-                         str(round(camsi[i][0] * rp / 100)) + 'x' + str(round(camsi[i][1] * rp / 100)) + ' | ' + \
-                         str(proc) + ' | ' + s_lt + ' | ' + s_rt + '\n')
+                           str(round(camsi[i][0] * rp / 100)) + 'x' + str(round(camsi[i][1] * rp / 100)) + ' | ' + \
+                           str(proc) + ' | ' + s_lt + ' | ' + s_rt + '\n')
             i += 1
 
     bpy.context.scene.render.resolution_x = glob_res[0]
@@ -7741,8 +7742,8 @@ class LayoutSSPanel(bpy.types.Panel):
 
             row = lay_objed.row(align=True)
             row_ = row.split(0.7, align=True)
-            row_.operator("object.misc", text='Obj switch on').type_op = 16
-            row_.operator("object.misc", text='off').type_op = 17
+            row_.operator("object.switch", text='Obj switch on').type_op = 16
+            row_.operator("object.switch", text='off').type_op = 17
             row.prop(lt, "oso_vizing", text='', icon='RESTRICT_VIEW_ON' if lt.oso_vizing else 'RESTRICT_VIEW_OFF')
             row.prop(lt, "oso_select", text='', icon='RESTRICT_SELECT_ON' if lt.oso_select else 'RESTRICT_SELECT_OFF')
             row.prop(lt, "oso_render", text='', icon='RESTRICT_RENDER_ON' if lt.oso_render else 'RESTRICT_RENDER_OFF')
@@ -7757,7 +7758,7 @@ class LayoutSSPanel(bpy.types.Panel):
                 row.prop(lt, 'compmeshes_treshold', text='treshold')
 
             row = lay_objed.row(align=True)
-            row.operator("object.misc", text='Obj select Modified').type_op = 6
+            row.operator("object.select_modified", text='Obj select Modified')
 
             row = lay_objed.row(align=True)
             row.operator("paul.filter_dupes_origins", text='Obj Filter dupes')
@@ -7776,10 +7777,10 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("paul.set_autosmooth", text='Set Autosmooth')
 
             row = lay_objed.row(align=True)
-            row.operator("object.misc", text='Curves select 2D').type_op = 1
+            row.operator("object.curves_select_2d", text='Curves select 2D')
 
             row = lay_objed.row(align=True)
-            row.operator("object.misc", text='Curve swap 2D/3D').type_op = 3
+            row.operator("object.curve_swap", text='Curve swap 2D/3D')
 
             lay_chunks = panel_add_button_and_box(base_layout=lay_objed, operator='mesh.sel_chunks',
                                                   text='Select Chunks', spoiler='disp_chunks', align=True)
@@ -7803,7 +7804,7 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col.row(align=True)
             row.operator(PaVolumeSelect.bl_idname, text='Volume Select')
             row.prop(lt, "valsel_objectmode", text='', icon='OBJECT_DATAMODE' if lt.valsel_objectmode
-                                                                                else 'EDITMODE_HLT')
+            else 'EDITMODE_HLT')
 
         lay_misc = panel_add_spoiler(base_layout=col_main, prop='disp_materials', text='Materials')
         if lay_misc:
@@ -7858,7 +7859,6 @@ class LayoutSSPanel(bpy.types.Panel):
                     row = col_top.row(align=True)
                     row.operator("object.railer_operator", text='Build').type_op = 4
 
-
             row = lay_build.row(align=True)
             row.operator("paul.make_border", text='Make Border')
             row.prop(lt, "disp_mborder", text='', icon='DOWNARROW_HLT' if lt.disp_mborder else 'RIGHTARROW')
@@ -7870,17 +7870,12 @@ class LayoutSSPanel(bpy.types.Panel):
             row = lay_build.row(align=True)
             row.operator("paul.stairs_maker", text='Stairs Maker')
 
-            lay_wall_extrude = panel_add_spoiler(base_layout=lay_build, prop='disp_matExtrude', text='Railer')
+            lay_wall_extrude = panel_add_spoiler(base_layout=lay_build, prop='disp_matExtrude', text='WallExtrude')
             if lay_wall_extrude:
                 row = lay_wall_extrude.row(align=True)
                 row.operator("mesh.get_mat4extrude", text='Get Mats')
                 row = lay_wall_extrude.row(align=True)
                 row.operator("mesh.mat_extrude", text='Template Extrude')
-
-
-
-
-
 
         col_top = col_main
         col = col_main
@@ -8008,8 +8003,6 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.operator("mesh.projectloop", text='3DLoop')
 
-
-
         # if context.mode == 'OBJECT':
         #     split = col.split()
         #     if lt.display_railer:
@@ -8039,8 +8032,6 @@ class LayoutSSPanel(bpy.types.Panel):
         #         row = col_top.row(align=True)
         #         row.operator("object.railer_operator", text='Build').type_op = 4
 
-
-
         # split = col.split()
         # if lt.disp_matExtrude:
         #     split.prop(lt, "disp_matExtrude", text="WallExtrude", icon='DOWNARROW_HLT')
@@ -8055,8 +8046,6 @@ class LayoutSSPanel(bpy.types.Panel):
         #     row = col_top.row(align=True)
         #     row.operator("mesh.mat_extrude", text='Template Extrude')
 
-
-
         split = col.split()
         if lt.disp_bremover:
             split.prop(lt, "disp_bremover", text="Batch Remover", icon='DOWNARROW_HLT')
@@ -8066,8 +8055,6 @@ class LayoutSSPanel(bpy.types.Panel):
             box = col.column(align=True).box().column()
             col_top = box.column(align=False)
             create_panel_batch_remover(col=col_top, scene=scene)
-
-
 
         def _FEDGE():
             pass
@@ -8138,7 +8125,6 @@ class LayoutSSPanel(bpy.types.Panel):
             layout.prop(lt, "axis_forward_setting")
             layout.prop(lt, "axis_up_setting")
             layout.prop(lt, "image_search_setting")
-
 
         def _RENDER():
             pass
@@ -8288,7 +8274,6 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.operator("paul.clean_glass", text='Clean Glass')
 
-
         # def _MISC():
         #     pass
 
@@ -8301,27 +8286,26 @@ class LayoutSSPanel(bpy.types.Panel):
         # if lt.disp_misc:
         #     box = col.column(align=True).box().column()
         #     col_top = box.column(align=True)
-            # row = col_top.row(align=True)
-            # row.operator("object.misc", text='MatchProp').type_op = 13
-            # row = col_top.row(align=True)
-            # row.operator("object.misc", text='Mats all to active').type_op = 8
-            # row = col_top.row(align=True)
-            # row.operator("object.misc", text='Mats selected to active').type_op = 14
-            # row = col_top.row(align=True)
-            # row.operator("object.misc", text='Mats sort').type_op = 15
-            # row = col_top.row(align=True)
-            # row.operator("object.misc", text='Mats suppress RGB').type_op = 4
-            # row = col_top.row(align=True)
-            # row.operator("paul.mats_unclone", text='Mats Unclone')
-            # row = col_top.row(align=True)
-            # row.operator("paul.mats_purgeout", text='Mats Purgeout')
-            # row = col_top.row(align=True)
-            # row.operator("object.misc", text='Matname HVS set').type_op = 9
-            # row = col_top.row(align=True)
-            # row.operator("object.misc", text='Matname HVS del').type_op = 10
-            # row = col_top.row(align=True)
-            # row.operator("object.misc", text='Matnodes switch').type_op = 7
-
+        # row = col_top.row(align=True)
+        # row.operator("object.misc", text='MatchProp').type_op = 13
+        # row = col_top.row(align=True)
+        # row.operator("object.misc", text='Mats all to active').type_op = 8
+        # row = col_top.row(align=True)
+        # row.operator("object.misc", text='Mats selected to active').type_op = 14
+        # row = col_top.row(align=True)
+        # row.operator("object.misc", text='Mats sort').type_op = 15
+        # row = col_top.row(align=True)
+        # row.operator("object.misc", text='Mats suppress RGB').type_op = 4
+        # row = col_top.row(align=True)
+        # row.operator("paul.mats_unclone", text='Mats Unclone')
+        # row = col_top.row(align=True)
+        # row.operator("paul.mats_purgeout", text='Mats Purgeout')
+        # row = col_top.row(align=True)
+        # row.operator("object.misc", text='Matname HVS set').type_op = 9
+        # row = col_top.row(align=True)
+        # row.operator("object.misc", text='Matname HVS del').type_op = 10
+        # row = col_top.row(align=True)
+        # row.operator("object.misc", text='Matnodes switch').type_op = 7
 
         def _NAMINGINSTANCES():
             pass
@@ -8406,7 +8390,6 @@ class LayoutSSPanel(bpy.types.Panel):
         if lt.disp_test:
             box = col.column(align=True).box().column()
             col_top = box.column(align=True)
-
 
             row = col_top.row(align=True)
             row.operator("paul.instance_resizer", text='Instance Resizer')
@@ -9293,7 +9276,50 @@ def main_railer(dist=1, z_up=False, follow_path=False, flat=False, instance=Fals
     return True
 
 
+class PaCurveSwap2D3D(bpy.types.Operator):
+    """switch selected curve type """
+    bl_idname = "object.curve_swap"
+    bl_label = "Curve swap 2D/3D"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        bpy.ops.object.misc(type_op=3)
+
+
+class PaCurvesSelect2D(bpy.types.Operator):
+    """select all 2D curves"""
+    bl_idname = "object.curves_select_2d"
+    bl_label = "Curves select 2D"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        bpy.ops.object.misc(type_op=1)
+
+
+class PaObjSwitchOnOff(bpy.types.Operator):
+    """resetting outliner options"""
+    bl_idname = "object.switch"
+    bl_label = "Object switch"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    type_op = bpy.props.IntProperty(name='type_op', default=0, options={'HIDDEN'})
+
+    def execute(self, context):
+        bpy.ops.object.misc(type_op=self.type_op)
+
+
+class PaObjSelectModified(bpy.types.Operator):
+    """select objects with modifiers"""
+    bl_idname = "object.select_modified"
+    bl_label = "Object select modified"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        bpy.ops.object.misc(type_op=6)
+
+
 class PaNJoin(bpy.types.Operator):
+    """join objects autofixing negative scale """
     bl_idname = "paul.njoin"
     bl_label = "NJoin"
     bl_options = {'REGISTER', 'UNDO'}
@@ -9331,6 +9357,7 @@ class PaNJoin(bpy.types.Operator):
 
 
 class PaMakeBorder(bpy.types.Operator):
+    """make border from selected polygons"""
     bl_idname = "paul.make_border"
     bl_label = "Make Border"
     bl_options = {'REGISTER', 'UNDO'}
@@ -9713,7 +9740,7 @@ class MatExrudeOperator(bpy.types.Operator):
 
 
 class MatsSelMultiple(bpy.types.Operator):
-    """Select objects that have more than one material or are not at all"""
+    """select objects with multiple materials"""
     bl_idname = "paul.mats_sel_multiple"
     bl_label = "Mats select multiple"
     bl_options = {'REGISTER', 'UNDO'}
@@ -10124,6 +10151,7 @@ class RailerOperator(bpy.types.Operator):
 
 
 class ChunksOperator(bpy.types.Operator):
+    """select mesh part"""
     bl_idname = "mesh.sel_chunks"
     bl_label = "Select Chunks"
     bl_options = {'REGISTER', 'UNDO'}
@@ -10539,7 +10567,7 @@ class PaObnameMats(bpy.types.Operator):
 
 
 class PaStairsMaker(bpy.types.Operator):
-    r"""Строит лесенку из лупа нисходящих полигонов"""
+    """build stair from polystripe"""
     bl_idname = "paul.stairs_maker"
     bl_label = "Stairs Maker"
     bl_options = {'REGISTER', 'UNDO'}
@@ -10570,6 +10598,7 @@ class PsSelSameVerts(bpy.types.Operator):
 
 
 class PaSetAutoSmooth(bpy.types.Operator):
+    """set Autosmooth angle 70 on selection"""
     bl_idname = "paul.set_autosmooth"
     bl_label = "Set Autosmooth"
     bl_options = {'REGISTER', 'UNDO'}
@@ -10649,7 +10678,6 @@ class PaInstancesMeshnameReplacePP(bpy.types.Operator):
             for obj in obj_for_select:
                 obj.select = True
             return {'FINISHED'}
-
 
         self.selectors = []
         objs = [o for o in context.scene.objects if o.select]
@@ -10794,7 +10822,7 @@ class PaInstanceResizer(bpy.types.Operator):
 
             for j, o in enumerate(ins_objs):
                 o.dimensions = dim[j]
-                o.scale = [x*ka*ko for x, ka, ko in zip(o.scale, scale, o_scale[j])]
+                o.scale = [x * ka * ko for x, ka, ko in zip(o.scale, scale, o_scale[j])]
 
             one_obj.append(context.active_object)
             bpy.ops.object.select_all(action='DESELECT')
@@ -10806,6 +10834,7 @@ class PaInstanceResizer(bpy.types.Operator):
 
 
 class PaObjNegScale(bpy.types.Operator):
+    """filter objects with mirror scaling"""
     bl_idname = "paul.obj_filter_neg_scale"
     bl_label = "Obj filter negative scale"
     bl_options = {'REGISTER', 'UNDO'}
@@ -10837,7 +10866,7 @@ class PaObjNegScale(bpy.types.Operator):
 
 
 class PaInstancesRecount(bpy.types.Operator):
-    """Calculates vertices count of selected objects to Vertices.txt"""
+    """text report of vertices/instances of selected objects"""
     bl_idname = "paul.instances_recount"
     bl_label = "Instances Recount"
     bl_options = {'REGISTER', 'UNDO'}
@@ -10992,7 +11021,7 @@ class PaInstancesRename(bpy.types.Operator):
 
 
 class PaMatsDatafix(bpy.types.Operator):
-    """Turn materials slots to data and remove cloned slots for selected objects"""
+    """remove copies of material slots on objects and turning slot from object to data"""
     bl_idname = "paul.mats_datafix"
     bl_label = "Mats Datafix"
     bl_options = {'REGISTER', 'UNDO'}
@@ -11109,7 +11138,9 @@ class PaCleanGlass(bpy.types.Operator):
 
         return {'FINISHED'}
 
+
 class PaVolumeSelect(bpy.types.Operator):
+    """select objects/verts in volume of given object"""
     bl_idname = "paul.valume_select"
     bl_label = "Valume select"
     bl_options = {'REGISTER', 'UNDO'}
@@ -11159,6 +11190,7 @@ class PaVolumeSelect(bpy.types.Operator):
 
             context.scene.objects.active = act_obj
         return {'FINISHED'}
+
 
 class PaVertsProjectOnEdge(bpy.types.Operator):
     """split edge by perpendicular projection of other edges"""
@@ -11212,9 +11244,9 @@ class PaVertsProjectOnEdge(bpy.types.Operator):
             point1, dist1 = intersect_point_line(v1, pl1, pl2)
             point2, dist2 = intersect_point_line(v2, pl1, pl2)
 
-            if 1 > dist1 > 0  and point1 not in points:
+            if 1 > dist1 > 0 and point1 not in points:
                 points.append((point1, point1 - pl1))
-            if 1 > dist2 > 0  and point2 not in points:
+            if 1 > dist2 > 0 and point2 not in points:
                 points.append((point2, point2 - pl1))
 
         points_sort = sorted(points, key=itemgetter(1))
@@ -11368,6 +11400,7 @@ class PaObjMultySureUV(bpy.types.Operator):
 
 
 class PaObjFilterLocalRotated(bpy.types.Operator):
+    """filter objects with rotation"""
     bl_idname = "paul.obj_filter_local_rotated"
     bl_label = "Obj filter local rotated"
     bl_options = {'REGISTER', 'UNDO'}
@@ -11397,7 +11430,7 @@ class PaObjFilterLocalRotated(bpy.types.Operator):
 
 
 class PaMisc_MatsFilterDupes(bpy.types.Operator):
-    r'''Оставляет в выделенном состоянии объекты с одинаковыми координатами и количеством вершин'''
+    """filter objects with origing in one place"""
     bl_idname = "paul.filter_dupes_origins"
     bl_label = "Filter dupes"
     bl_options = {'REGISTER', 'UNDO'}
@@ -11458,10 +11491,12 @@ class paul_managerProps(bpy.types.PropertyGroup):
     """
     display = bpy.props.BoolProperty(name='display')
     display_align = bpy.props.BoolProperty(name='display_align', description="Align selection to active edge")
-    display_offset = bpy.props.BoolProperty(name='display_offset', description="store and reuse distance for modification")
+    display_offset = bpy.props.BoolProperty(name='display_offset',
+                                            description="store and reuse distance for modification")
     display_3dmatch = bpy.props.BoolProperty(name='display_3dmatch', description="3point alignation by key")
-    display_railer = bpy.props.BoolProperty(name='display_railer')
-
+    display_railer = bpy.props.BoolProperty(name='display_railer',
+                                            description="spread objects along curve with straight segments"
+                                            )
     loopreduce_step = bpy.props.IntProperty(name='Step', default=5, min=1)
     loopresolve_step = bpy.props.IntProperty(name='Step', default=5, min=3)
     loopresolve_dist = bpy.props.FloatProperty(name='Dist', default=1.0, min=1e-4, precision=4)
@@ -11523,7 +11558,9 @@ class paul_managerProps(bpy.types.PropertyGroup):
     spline_Bspline2 = bpy.props.BoolProperty(name="spline_Bspline2", default=True)
     barc_rad = bpy.props.FloatProperty(name="barc_rad")
 
-    disp_matExtrude = bpy.props.BoolProperty(name='disp_matExtrude', default=False)
+    disp_matExtrude = bpy.props.BoolProperty(name='disp_matExtrude', default=False,
+                                             description="extrude vertical material colored loop"
+                                             )
     disp_projectloop = bpy.props.BoolProperty(name='disp_projectloop', default=False)
     disp_barc = bpy.props.BoolProperty(name='disp_barc', default=False)
     disp_misc = bpy.props.BoolProperty(name='disp_misc', default=False)
@@ -11533,12 +11570,20 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_3drotor = bpy.props.BoolProperty(name='disp_3drotor', default=False, description="manipulate object with key")
     disp_obj = bpy.props.BoolProperty(name='disp_obj', default=False)
     disp_chunks = bpy.props.BoolProperty(name='disp_chunks', default=False)
-    disp_corner = bpy.props.BoolProperty(name='disp_corner', default=False, description="lengthen or split edges by projections")
+    disp_corner = bpy.props.BoolProperty(name='disp_corner', default=False,
+                                         description="lengthen or split edges by projections"
+                                         )
     disp_reduce = bpy.props.BoolProperty(name='disp_reduce', default=False)
-    disp_sel = bpy.props.BoolProperty(name='disp_sel', default=False, description='Set length of selected edges equal to stored in Sideshift ')
+    disp_sel = bpy.props.BoolProperty(name='disp_sel', default=False,
+                                      description='Set length of selected edges equal to stored in Sideshift '
+                                      )
     disp_zmj100 = bpy.props.BoolProperty(name='disp_zmj100', default=False)
-    disp_distverts = bpy.props.BoolProperty(name='disp_distverts', default=False)
-    disp_compmeshes = bpy.props.BoolProperty(name='disp_compmeshes', default=False)
+    disp_distverts = bpy.props.BoolProperty(name='disp_distverts', default=False,
+                                            description="find verts that will be collapsed with remove doubles"
+                                            )
+    disp_compmeshes = bpy.props.BoolProperty(name='disp_compmeshes', default=False,
+                                             description="per vertex objects comparison"
+                                             )
     disp_blendupcleanup = bpy.props.BoolProperty(name='disp_blendupcleanup', default=False)
     disp_milovsky = bpy.props.BoolProperty(name='disp_milovsky', default=False)
     disp_omsureuv = bpy.props.BoolProperty(name='disp_omsureuv', default=False)
@@ -11556,7 +11601,8 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_render = bpy.props.BoolProperty(name='disp_render', default=False)
     disp_bremover = bpy.props.BoolProperty(name='disp_bremover', default=False)
     disp_inst_repl = bpy.props.BoolProperty(name='disp_inst_repl', default=False)
-    display_edgloop = bpy.props.BoolProperty(name='display_edgloop', default=False, description='Tools about Edges and Loops')
+    display_edgloop = bpy.props.BoolProperty(name='display_edgloop', default=False,
+                                             description='Tools about Edges and Loops')
     disp_cad = bpy.props.BoolProperty(name='disp_cad', default=False)
     disp_objed = bpy.props.BoolProperty(name='disp_objed', default=False)
     disp_build = bpy.props.BoolProperty(name='disp_build', default=False)
@@ -11996,7 +12042,7 @@ class ImportMultipleObjs(bpy.types.Operator, ImportHelper):
 
         first_layer_idx = 0
         if config.by_layers_setting:
-            sort_files = sorted(self.files, key = get_filename)
+            sort_files = sorted(self.files, key=get_filename)
             layers_context = list(bpy.context.scene.layers[:])
             first_layer_idx = layers_context.index(True)
         else:
@@ -12052,34 +12098,34 @@ class ThisScriptUpdateAddon(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = [eap_op0, eap_op1, eap_op2, eap_op3, ChunksOperator, f_op0, \
-           RenderMe, ExportSomeData, RotorOperator, DisableDubleSideOperator, ImportMultipleObjs, \
-           MatExrudeOperator, GetMatsOperator, CrossPolsOperator, SSOperator, SpreadOperator, \
-           AlignOperator, Project3DLoopOperator, BarcOperator, LayoutSSPanel, MessageOperator, \
-           OffsetOperator, MiscOperator, paul_managerProps, ThisScriptUpdateAddon, \
-           CheredatorModalOperator, D1_fedge, CornerOperator, SelOperator, RailerOperator, \
-           DistVerticesOperator, CompareMeshes, PaInstancesRecount, PaInstancesRename, \
-           PaMatsDatafix, PaInstancesSelPair, SureUVWOperator, PaObjMultySureUV, \
-           PaInstancesUnique, PaObjNegScale, PaObjFilterLocalRotated, MatsSelMultiple, \
-           PaInstancesMeshnameReplacePP, PaSetAutoSmooth, PsSelSameVerts, \
-           PaMatsUnclone, PaMatsPurgeout, PaSearchInstanses1, PaSearchInstanses2, \
-           PaHeavyNgons, PaCleanGlass, PaVertsProjectOnEdge, PaEdgesPairFill, PaObnameMats, \
-           PaLoopReduce, AFASOperator, MatsEqualizeOperator, PaMisc_MatsAllToActive, \
-           PaMisc_MatsSelectedToActive, PaMisc_MatnodesSwitch, PaStairsMaker, EExtrudeAlongPath, \
-           PaGroupSelectLinked, BTSelectInstancesOperator, PaImageTPanel, \
-           BTFilterInstancesOperator, BTObjDistributeByXOperator, BTObnameToMeshnameOperator, \
-           BTMeshnameToObnameOperator, BTIsolateLayersOperator, PaMisc_MatsFilterDupes, \
-           BTDropInstancesOperator, PaLoopResolve, PaBarcCreateOperator, PaBarcSetOperator, \
-           PaBarcCursorOperator, PaSideShiftStoreDist, PaSideShiftActiveCursor, \
-           PaSideShiftBackward, PaSideShiftForward, PaPropagateObname, SUV_OT_spreads, \
-           PaMakeBorder, UvScalerOperator, PaRCS, NATimeLineRenderStart, NGD1_camswitch, PaInstanceResizer, \
-           PaNJoin, AMCornerCross, AMExtendCross, PaVolumeSelect, \
+classes = [eap_op0, eap_op1, eap_op2, eap_op3, ChunksOperator, f_op0,
+           RenderMe, ExportSomeData, RotorOperator, DisableDubleSideOperator, ImportMultipleObjs,
+           MatExrudeOperator, GetMatsOperator, CrossPolsOperator, SSOperator, SpreadOperator,
+           AlignOperator, Project3DLoopOperator, BarcOperator, LayoutSSPanel, MessageOperator,
+           OffsetOperator, MiscOperator, paul_managerProps, ThisScriptUpdateAddon,
+           CheredatorModalOperator, D1_fedge, CornerOperator, SelOperator, RailerOperator,
+           DistVerticesOperator, CompareMeshes, PaInstancesRecount, PaInstancesRename,
+           PaMatsDatafix, PaInstancesSelPair, SureUVWOperator, PaObjMultySureUV,
+           PaInstancesUnique, PaObjNegScale, PaObjFilterLocalRotated, MatsSelMultiple,
+           PaInstancesMeshnameReplacePP, PaSetAutoSmooth, PsSelSameVerts,
+           PaMatsUnclone, PaMatsPurgeout, PaSearchInstanses1, PaSearchInstanses2,
+           PaHeavyNgons, PaCleanGlass, PaVertsProjectOnEdge, PaEdgesPairFill, PaObnameMats,
+           PaLoopReduce, AFASOperator, MatsEqualizeOperator, PaMisc_MatsAllToActive,
+           PaMisc_MatsSelectedToActive, PaMisc_MatnodesSwitch, PaStairsMaker, EExtrudeAlongPath,
+           PaGroupSelectLinked, BTSelectInstancesOperator, PaImageTPanel,
+           BTFilterInstancesOperator, BTObjDistributeByXOperator, BTObnameToMeshnameOperator,
+           BTMeshnameToObnameOperator, BTIsolateLayersOperator, PaMisc_MatsFilterDupes,
+           BTDropInstancesOperator, PaLoopResolve, PaBarcCreateOperator, PaBarcSetOperator,
+           PaBarcCursorOperator, PaSideShiftStoreDist, PaSideShiftActiveCursor,
+           PaSideShiftBackward, PaSideShiftForward, PaPropagateObname, SUV_OT_spreads,
+           PaMakeBorder, UvScalerOperator, PaRCS, NATimeLineRenderStart, NGD1_camswitch, PaInstanceResizer,
+           PaNJoin, AMCornerCross, AMExtendCross, PaVolumeSelect,
            BTBatchUVMapsEraserOperator, BTBatchVertexGroupEraserOperator,
            BTBatchShapeKeysEraserOperator, BTBatchVertexColorsEraserOperator, BTBatchMaterialEraserOperator,
            BTBatchGPencilEraserOperator, BTAllModifiersEraserOperator, BTAllSubsurfsEraserOperator,
            BTZeroSubsurfsEraserOperator, BTEdgeSplitRemoverOperator, BTMirrorMDFRemoverOperator,
            BTMultipleUVMapsRemoverOperator, BTBevelModifierRemoverOperator, BTEmptySlotsRemoverOperator,
-           BatchOperatorSettings
+           BatchOperatorSettings, PaObjSwitchOnOff, PaObjSelectModified, PaCurvesSelect2D, PaCurveSwap2D3D
            ]
 
 addon_keymaps = []
@@ -12134,6 +12180,7 @@ def register():
     bpy.context.window_manager.paul_manager.disp_materials = False
     bpy.context.window_manager.paul_manager.display_railer = False
     bpy.context.window_manager.paul_manager.disp_matExtrude = False
+    bpy.context.window_manager.paul_manager.disp_distverts = False
 
     bpy.types.Scene.batch_operator_settings = \
         bpy.props.PointerProperty(type=BatchOperatorSettings)
