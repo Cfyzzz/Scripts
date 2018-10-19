@@ -7504,8 +7504,8 @@ def panel_add_button_and_box(base_layout, operator, text, spoiler, align=False):
     lt = bpy.context.window_manager.paul_manager
     row = base_layout.row(align=align)
     row.operator(operator, text=text)
-    row.prop(lt, spoiler, text='', icon='DOWNARROW_HLT' if lt[spoiler] else 'RIGHTARROW')
-    if lt[spoiler]:
+    row.prop(lt, spoiler, text='', icon='DOWNARROW_HLT' if getattr(lt, spoiler, False) else 'RIGHTARROW')
+    if getattr(lt, spoiler, False):
         row = base_layout.row()
         box2 = row.box().box()
         col2 = box2.column()
