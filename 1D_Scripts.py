@@ -74,13 +74,13 @@
 # 0-9-31(09.09.2018) Change (Instances ++ replace) add: Selected only
 # 0-9-32(11.09.2018) Change (Instances ++ replace) inactivate Selected only
 # 0-9-33(02.10.2018) Change (Render) add: OpenGL Render
-# 0-10-00(11.10.2018) Reformat Panel Edges/loops
+# 0-10-01(11.10.2018) Reformat Panel Edges/loops
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 0),
+    "version": (0, 10, 01),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
