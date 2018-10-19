@@ -76,12 +76,13 @@
 # 0-9-33(02.10.2018) Change (Render) add: OpenGL Render
 # 0-10-00(11.10.2018) Reformat Panel Edges/loops
 # 0-10-01(19.10.2018) Upp version
+# 0-10-02(19.10.2018) Bugfix
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 1),
+    "version": (0, 10, 2),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7487,12 +7488,12 @@ def panel_add_button(base_layout, operator, text, align=False):
 def panel_add_spoiler(base_layout, prop, text):
     lt = bpy.context.window_manager.paul_manager
     split = base_layout.split()
-    if lt[prop]:
+    if getattr(lt, prop, False):
         split.prop(lt, prop, text=text, icon='DOWNARROW_HLT')
     else:
         split.prop(lt, prop, text=text, icon='RIGHTARROW')
 
-    if lt[prop]:
+    if getattr(lt, prop, False):
         box = base_layout.column(align=True).box().column(align=True)
         col_top = box.column(align=True)
         return col_top
