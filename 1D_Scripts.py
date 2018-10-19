@@ -77,12 +77,13 @@
 # 0-10-00(11.10.2018) Reformat Panel Edges/loops
 # 0-10-01(19.10.2018) Upp version
 # 0-10-02(19.10.2018) Bugfix
+# 0-10-03(19.10.2018) Bugfix
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 2),
+    "version": (0, 10, 3),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
