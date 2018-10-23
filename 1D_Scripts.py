@@ -9187,6 +9187,7 @@ class PaCurveSwap2D3D(bpy.types.Operator):
 
     def execute(self, context):
         bpy.ops.object.misc(type_op=3)
+        return {'FINISHED'}
 
 
 class PaCurvesSelect2D(bpy.types.Operator):
@@ -9197,6 +9198,7 @@ class PaCurvesSelect2D(bpy.types.Operator):
 
     def execute(self, context):
         bpy.ops.object.misc(type_op=1)
+        return {'FINISHED'}
 
 
 class PaObjSwitchOnOff(bpy.types.Operator):
@@ -9209,6 +9211,7 @@ class PaObjSwitchOnOff(bpy.types.Operator):
 
     def execute(self, context):
         bpy.ops.object.misc(type_op=self.type_op)
+        return {'FINISHED'}
 
 
 class PaObjSelectModified(bpy.types.Operator):
@@ -9219,6 +9222,7 @@ class PaObjSelectModified(bpy.types.Operator):
 
     def execute(self, context):
         bpy.ops.object.misc(type_op=6)
+        return {'FINISHED'}
 
 
 class PaNJoin(bpy.types.Operator):
