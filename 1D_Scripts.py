@@ -78,12 +78,13 @@
 # 0-10-01(19.10.2018) Upp version
 # 0-10-02(19.10.2018) Bugfix
 # 0-10-03(19.10.2018) Bugfix
+# 0-10-04(23.10.2018) Set the panels in order
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 3),
+    "version": (0, 10, 4),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7557,6 +7558,11 @@ class LayoutSSPanel(bpy.types.Panel):
         row = col_main.row(align=False)
         row.operator("mesh.simple_scale_operator", text='Get Orientation').type_op = 1
 
+        row = col_main.row(align=False)
+        row.operator("mesh.simple_scale_operator", text='XYcollapse').type_op = 0
+
+        col = col_main
+
         lay_cad = panel_add_spoiler(base_layout=col_main, prop='disp_cad', text='CAD')
         if lay_cad:
             lay_aligner = panel_add_spoiler(base_layout=lay_cad, prop='display_align', text='Aligner')
@@ -7726,6 +7732,74 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("paul.verts_project_on_edge", text='Verts project')
             row.prop(lt, "vproj_active", text='', icon='EDGESEL' if lt.vproj_active else 'MATCUBE')
 
+        split = col.split()
+        if lt.disp_naminginstances:
+            split.prop(lt, "disp_naminginstances", text="Naming/Instances", icon='DOWNARROW_HLT')
+        else:
+            split.prop(lt, "disp_naminginstances", text="Naming/Instances", icon='RIGHTARROW')
+
+        if lt.disp_naminginstances:
+            box = col.column(align=True).box().column()
+            col_top = box.column(align=True)
+            row = col_top.row(align=True)
+            row.operator("paul.select_instances", text='Select iinstances')
+            row = col_top.row(align=True)
+            row.operator("paul.filter_instances", text='Filter iiinstances')
+            row = col_top.row(align=True)
+            row.operator("paul.obname_to_meshname", text='Obname to Meshname >')
+            row = col_top.row(align=True)
+            row.operator("paul.meshname_to_obname", text='Meshname to Obname <')
+            row = col_top.row(align=True)
+            row.operator("paul.obj_distribute_by_x", text='Obj Distribute by X')
+            row = col_top.row(align=True)
+            row.operator("paul.drop_instances", text='Drop Instances')
+            row = col_top.row(align=True)
+            row.operator("paul.isolate_layers", text='Isolate layers')
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Obj ignore instances').type_op = 0
+            row = col_top.row(align=True)
+            row.operator("paul.instances_sel_pair", text='Instances select pair')
+            row = col_top.row(align=True)
+            row.operator("paul.propagate_obname", text='Propagate Obname')
+            row = col_top.row(align=True)
+            row.operator("paul.instances_rename", text='Instances Rename')
+            row = col_top.row(align=True)
+            row.operator("paul.obname_mat", text='Obname materials')
+            row = col_top.row(align=True)
+            row.operator("paul.instances_meshname_replace", text='Instances ++ replace')
+            row.prop(lt, "disp_inst_repl", text='', icon='DOWNARROW_HLT' if lt.disp_inst_repl else 'RIGHTARROW')
+            if lt.disp_inst_repl:
+                row = col_top.row(align=True)
+                col2 = row.box().box().column()
+                col2.prop(lt, 'inst_repl_use_translation', text='Use translation')
+                col2 = col2.column()
+                col2.active = lt.inst_repl_use_translation
+                col2.prop(lt, 'inst_repl_select', text='Selected only')
+                col2.prop(lt, 'inst_repl_from', text='From')
+                col2.prop(lt, 'inst_repl_to', text='To')
+            row = col_top.row(align=True)
+            row.operator("paul.instances_sel_unique", text='Instances select unique')
+            row = col_top.row(align=True)
+            row.operator("paul.search_instanses_1", text='Guess Active Instances')
+            row.prop(lt, "disp_si1", text='', icon='DOWNARROW_HLT' \
+                if lt.disp_si1 else 'RIGHTARROW')
+            if lt.disp_si1:
+                row = col_top.row(align=True)
+                row2 = row.box().box().row()
+                row2.prop(lt, 'si_percent', text='Percent')
+                row2.prop(lt, 'filter_mats', icon='MATERIAL', text='')
+            row = col_top.row(align=True)
+            row.operator("paul.search_instanses_2", text='Guess Chain Instances')
+            row.prop(lt, "disp_si2", text='', icon='DOWNARROW_HLT' \
+                if lt.disp_si2 else 'RIGHTARROW')
+            if lt.disp_si2:
+                row = col_top.row(align=True)
+                row2 = row.box().box().row()
+                row2.prop(lt, 'si_percent', text='Percent')
+                row2.prop(lt, 'filter_mats', icon='MATERIAL', text='')
+            row = col_top.row(align=True)
+            row.operator("paul.gsl", text='Group Select Linked')
+
         lay_objed = panel_add_spoiler(base_layout=col_main, prop='disp_objed', text='Object/Edit')
         if lay_objed:
             col_top = lay_objed.column(align=True)
@@ -7742,7 +7816,7 @@ class LayoutSSPanel(bpy.types.Panel):
 
             row = lay_objed.row(align=True)
             row_ = row.split(0.7, align=True)
-            row_.operator("object.switch", text='Obj switch on').type_op = 16
+            row_.operator("object.switch", text='Outliner set on').type_op = 16
             row_.operator("object.switch", text='off').type_op = 17
             row.prop(lt, "oso_vizing", text='', icon='RESTRICT_VIEW_ON' if lt.oso_vizing else 'RESTRICT_VIEW_OFF')
             row.prop(lt, "oso_select", text='', icon='RESTRICT_SELECT_ON' if lt.oso_select else 'RESTRICT_SELECT_OFF')
@@ -7806,82 +7880,7 @@ class LayoutSSPanel(bpy.types.Panel):
             row.prop(lt, "valsel_objectmode", text='', icon='OBJECT_DATAMODE' if lt.valsel_objectmode
             else 'EDITMODE_HLT')
 
-        lay_misc = panel_add_spoiler(base_layout=col_main, prop='disp_materials', text='Materials')
-        if lay_misc:
-            col_top = lay_misc.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("paul.mats_datafix", text='Mats Datafix')
-            row = col_top.row(align=True)
-            row.operator("paul.mats_sel_multiple", text='Mats select multiple')
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='MatchProp').type_op = 13
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats all to active').type_op = 8
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats selected to active').type_op = 14
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats sort').type_op = 15
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats suppress RGB').type_op = 4
-            row = col_top.row(align=True)
-            row.operator("paul.mats_unclone", text='Mats Unclone')
-            row = col_top.row(align=True)
-            row.operator("paul.mats_purgeout", text='Mats Purgeout')
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Matname HVS set').type_op = 9
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Matname HVS del').type_op = 10
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Matnodes switch').type_op = 7
-
-        lay_build = panel_add_spoiler(base_layout=col_main, prop='disp_build', text='Build')
-        if lay_build:
-            if context.mode == 'OBJECT':
-                lay_railer = panel_add_spoiler(base_layout=lay_build, prop='display_railer', text='Railer')
-                if lay_railer:
-                    col_top = lay_railer.column(align=True)
-                    row = col_top.row(align=True)
-
-                    row.prop(context.scene, 'path_obj', icon='OBJECT_DATAMODE')
-                    row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 1
-                    row = col_top.row(align=True)
-                    row.prop(context.scene, 'corner_obj', icon='OBJECT_DATAMODE')
-                    row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 2
-                    row = col_top.row(align=True)
-                    row.prop(context.scene, 'linear_obj', icon='OBJECT_DATAMODE')
-                    row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 3
-
-                    col_top = lay_railer.column(align=True)
-                    row = col_top.row(align=False)
-                    row.prop(lt, 'railer_dist', text='dist')
-
-                    col_top = lay_railer.column(align=True)
-                    row = col_top.row(align=True)
-                    row.operator("object.railer_operator", text='Build').type_op = 4
-
-            row = lay_build.row(align=True)
-            row.operator("paul.make_border", text='Make Border')
-            row.prop(lt, "disp_mborder", text='', icon='DOWNARROW_HLT' if lt.disp_mborder else 'RIGHTARROW')
-            if lt.disp_mborder:
-                row = lay_build.row(align=True)
-                row2 = row.box()
-                row2.prop(lt, 'mborder_size', text='Size')
-
-            row = lay_build.row(align=True)
-            row.operator("paul.stairs_maker", text='Stairs Maker')
-
-            lay_wall_extrude = panel_add_spoiler(base_layout=lay_build, prop='disp_matExtrude', text='WallExtrude')
-            if lay_wall_extrude:
-                row = lay_wall_extrude.row(align=True)
-                row.operator("mesh.get_mat4extrude", text='Get Mats')
-                row = lay_wall_extrude.row(align=True)
-                row.operator("mesh.mat_extrude", text='Template Extrude')
-
-        col_top = col_main
         col = col_main
-        row = col.row(align=False)
-        row.operator("mesh.simple_scale_operator", text='XYcollapse').type_op = 0
-
         split = col.split()
         if lt.display_edgloop:
             split.prop(lt, "display_edgloop", text="Edges/Loops", icon='DOWNARROW_HLT')
@@ -8003,6 +8002,111 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.operator("mesh.projectloop", text='3DLoop')
 
+        lay_misc = panel_add_spoiler(base_layout=col_main, prop='disp_materials', text='Materials')
+        if lay_misc:
+            col_top = lay_misc.column(align=True)
+            row = col_top.row(align=True)
+            row.operator("paul.mats_datafix", text='Mats Datafix')
+            row = col_top.row(align=True)
+            row.operator("paul.mats_sel_multiple", text='Mats select multiple')
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='MatchProp').type_op = 13
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Mats all to active').type_op = 8
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Mats selected to active').type_op = 14
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Mats sort').type_op = 15
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Mats suppress RGB').type_op = 4
+            row = col_top.row(align=True)
+            row.operator("paul.mats_unclone", text='Mats Unclone')
+            row = col_top.row(align=True)
+            row.operator("paul.mats_purgeout", text='Mats Purgeout')
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Matname HVS set').type_op = 9
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Matname HVS del').type_op = 10
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Matnodes switch').type_op = 7
+
+        lay_build = panel_add_spoiler(base_layout=col_main, prop='disp_build', text='Build')
+        if lay_build:
+            if context.mode == 'OBJECT':
+                lay_railer = panel_add_spoiler(base_layout=lay_build, prop='display_railer', text='Railer')
+                if lay_railer:
+                    col_top = lay_railer.column(align=True)
+                    row = col_top.row(align=True)
+
+                    row.prop(context.scene, 'path_obj', icon='OBJECT_DATAMODE')
+                    row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 1
+                    row = col_top.row(align=True)
+                    row.prop(context.scene, 'corner_obj', icon='OBJECT_DATAMODE')
+                    row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 2
+                    row = col_top.row(align=True)
+                    row.prop(context.scene, 'linear_obj', icon='OBJECT_DATAMODE')
+                    row.operator("object.railer_operator", icon='EYEDROPPER', text='').type_op = 3
+
+                    col_top = lay_railer.column(align=True)
+                    row = col_top.row(align=False)
+                    row.prop(lt, 'railer_dist', text='dist')
+
+                    col_top = lay_railer.column(align=True)
+                    row = col_top.row(align=True)
+                    row.operator("object.railer_operator", text='Build').type_op = 4
+
+            row = lay_build.row(align=True)
+            row.operator("paul.make_border", text='Make Border')
+            row.prop(lt, "disp_mborder", text='', icon='DOWNARROW_HLT' if lt.disp_mborder else 'RIGHTARROW')
+            if lt.disp_mborder:
+                row = lay_build.row(align=True)
+                row2 = row.box()
+                row2.prop(lt, 'mborder_size', text='Size')
+
+            row = lay_build.row(align=True)
+            row.operator("paul.stairs_maker", text='Stairs Maker')
+
+            lay_wall_extrude = panel_add_spoiler(base_layout=lay_build, prop='disp_matExtrude', text='WallExtrude')
+            if lay_wall_extrude:
+                row = lay_wall_extrude.row(align=True)
+                row.operator("mesh.get_mat4extrude", text='Get Mats')
+                row = lay_wall_extrude.row(align=True)
+                row.operator("mesh.mat_extrude", text='Template Extrude')
+
+        split = col.split()
+        if lt.disp_render:
+            split.prop(lt, "disp_render", text="Render", icon='DOWNARROW_HLT')
+        else:
+            split.prop(lt, "disp_render", text="Render", icon='RIGHTARROW')
+
+        if lt.disp_render:
+            box = col.column(align=True).box().column()
+            col_render = box.column(align=True)
+
+            row = col_render.row(align=True)
+            row.operator('scene.camswitch', text='Prev', icon='TRIA_LEFT').next = False
+            row.operator('scene.camswitch', text='Next', icon='TRIA_RIGHT').next = True
+
+            col_top = box.column(align=True)
+
+            split = col_top.split()
+            if lt.disp_batch:
+                split.prop(lt, "disp_batch", text="Batch Render", icon='DOWNARROW_HLT')
+            else:
+                split.prop(lt, "disp_batch", text="Batch Render", icon='RIGHTARROW')
+
+            if lt.disp_batch:
+                box = col_render.column(align=True).box().column()
+                col_top = box.column(align=True)
+                col_top.prop(lt, "batch_opengl", text="OpenGL Render")
+                col_top = box.column(align=True)
+                col_top.operator("scene.render_me", text='Batch Render')
+                col_top = box.column(align=True)
+                col_top.operator("paul.read_camera_setup", text='RCS Read Camera setup')
+
+            col_top = box.column(align=True)
+            col_top.operator('timelinerender.start', icon='TIME', text='Start TimeLine Render')
+
         split = col.split()
         if lt.disp_bremover:
             split.prop(lt, "disp_bremover", text="Batch Remover", icon='DOWNARROW_HLT')
@@ -8082,43 +8186,6 @@ class LayoutSSPanel(bpy.types.Panel):
             layout.prop(lt, "axis_forward_setting")
             layout.prop(lt, "axis_up_setting")
             layout.prop(lt, "image_search_setting")
-
-        def _RENDER():
-            pass
-
-        split = col.split()
-        if lt.disp_render:
-            split.prop(lt, "disp_render", text="Render", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_render", text="Render", icon='RIGHTARROW')
-
-        if lt.disp_render:
-            box = col.column(align=True).box().column()
-            col_render = box.column(align=True)
-
-            row = col_render.row(align=True)
-            row.operator('scene.camswitch', text='Prev', icon='TRIA_LEFT').next = False
-            row.operator('scene.camswitch', text='Next', icon='TRIA_RIGHT').next = True
-
-            col_top = box.column(align=True)
-
-            split = col_top.split()
-            if lt.disp_batch:
-                split.prop(lt, "disp_batch", text="Batch Render", icon='DOWNARROW_HLT')
-            else:
-                split.prop(lt, "disp_batch", text="Batch Render", icon='RIGHTARROW')
-
-            if lt.disp_batch:
-                box = col_render.column(align=True).box().column()
-                col_top = box.column(align=True)
-                col_top.prop(lt, "batch_opengl", text="OpenGL Render")
-                col_top = box.column(align=True)
-                col_top.operator("scene.render_me", text='Batch Render')
-                col_top = box.column(align=True)
-                col_top.operator("paul.read_camera_setup", text='RCS Read Camera setup')
-
-            col_top = box.column(align=True)
-            col_top.operator('timelinerender.start', icon='TIME', text='Start TimeLine Render')
 
         split = col.split()
         if lt.disp_zmj100:
@@ -8226,78 +8293,6 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("paul.heavy_ngons", text='Heavy NGons')
             row = col_top.row(align=True)
             row.operator("paul.clean_glass", text='Clean Glass')
-
-
-        def _NAMINGINSTANCES():
-            pass
-
-        split = col.split()
-        if lt.disp_naminginstances:
-            split.prop(lt, "disp_naminginstances", text="Naming/Instances", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_naminginstances", text="Naming/Instances", icon='RIGHTARROW')
-
-        if lt.disp_naminginstances:
-            box = col.column(align=True).box().column()
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("paul.select_instances", text='Select iinstances')
-            row = col_top.row(align=True)
-            row.operator("paul.filter_instances", text='Filter iiinstances')
-            row = col_top.row(align=True)
-            row.operator("paul.obname_to_meshname", text='Obname to Meshname >')
-            row = col_top.row(align=True)
-            row.operator("paul.meshname_to_obname", text='Meshname to Obname <')
-            row = col_top.row(align=True)
-            row.operator("paul.obj_distribute_by_x", text='Obj Distribute by X')
-            row = col_top.row(align=True)
-            row.operator("paul.drop_instances", text='Drop Instances')
-            row = col_top.row(align=True)
-            row.operator("paul.isolate_layers", text='Isolate layers')
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Obj ignore instances').type_op = 0
-            row = col_top.row(align=True)
-            row.operator("paul.instances_sel_pair", text='Instances select pair')
-            row = col_top.row(align=True)
-            row.operator("paul.propagate_obname", text='Propagate Obname')
-            row = col_top.row(align=True)
-            row.operator("paul.instances_rename", text='Instances Rename')
-            row = col_top.row(align=True)
-            row.operator("paul.obname_mat", text='Obname materials')
-            row = col_top.row(align=True)
-            row.operator("paul.instances_meshname_replace", text='Instances ++ replace')
-            row.prop(lt, "disp_inst_repl", text='', icon='DOWNARROW_HLT' if lt.disp_inst_repl else 'RIGHTARROW')
-            if lt.disp_inst_repl:
-                row = col_top.row(align=True)
-                col2 = row.box().box().column()
-                col2.prop(lt, 'inst_repl_use_translation', text='Use translation')
-                col2 = col2.column()
-                col2.active = lt.inst_repl_use_translation
-                col2.prop(lt, 'inst_repl_select', text='Selected only')
-                col2.prop(lt, 'inst_repl_from', text='From')
-                col2.prop(lt, 'inst_repl_to', text='To')
-            row = col_top.row(align=True)
-            row.operator("paul.instances_sel_unique", text='Instances select unique')
-            row = col_top.row(align=True)
-            row.operator("paul.search_instanses_1", text='Guess Active Instances')
-            row.prop(lt, "disp_si1", text='', icon='DOWNARROW_HLT' \
-                if lt.disp_si1 else 'RIGHTARROW')
-            if lt.disp_si1:
-                row = col_top.row(align=True)
-                row2 = row.box().box().row()
-                row2.prop(lt, 'si_percent', text='Percent')
-                row2.prop(lt, 'filter_mats', icon='MATERIAL', text='')
-            row = col_top.row(align=True)
-            row.operator("paul.search_instanses_2", text='Guess Chain Instances')
-            row.prop(lt, "disp_si2", text='', icon='DOWNARROW_HLT' \
-                if lt.disp_si2 else 'RIGHTARROW')
-            if lt.disp_si2:
-                row = col_top.row(align=True)
-                row2 = row.box().box().row()
-                row2.prop(lt, 'si_percent', text='Percent')
-                row2.prop(lt, 'filter_mats', icon='MATERIAL', text='')
-            row = col_top.row(align=True)
-            row.operator("paul.gsl", text='Group Select Linked')
 
         def _TESTZONE():
             pass
@@ -9204,10 +9199,10 @@ class PaCurvesSelect2D(bpy.types.Operator):
 class PaObjSwitchOnOff(bpy.types.Operator):
     """resetting outliner options"""
     bl_idname = "object.switch"
-    bl_label = "Object switch"
+    bl_label = "Outliner set"
     bl_options = {'REGISTER', 'UNDO'}
 
-    type_op = bpy.props.IntProperty(name='type_op', default=0, options={'HIDDEN'})
+    type_op = bpy.props.IntProperty(name='type_op', default=16, options={'HIDDEN'})
 
     def execute(self, context):
         bpy.ops.object.misc(type_op=self.type_op)
