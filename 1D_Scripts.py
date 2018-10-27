@@ -80,12 +80,13 @@
 # 0-10-03(19.10.2018) Bugfix
 # 0-10-04(23.10.2018) Set the panels in order
 # 0-10-05(23.10.2018) Changed the order of the tools
+# 0-10-06(27.10.2018) Filter on the Mesh of the functions guess_active_instance, chain_instance, obname_to_meshname, meshname_to_obname
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 5),
+    "version": (0, 10, 6),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -1160,7 +1161,8 @@ class BTObnameToMeshnameOperator(BTBatchOperatorMixin, bpy.types.Operator):
     bl_description = 'Assigns object name to its meshname. Works with all selected objects'
 
     def process_object(self, obj):
-        obj.data.name = obj.name
+        if obj.type != "EMPTY":
+            obj.data.name = obj.name
 
 
 class BTMeshnameToObnameOperator(BTBatchOperatorMixin, bpy.types.Operator):
@@ -1169,7 +1171,8 @@ class BTMeshnameToObnameOperator(BTBatchOperatorMixin, bpy.types.Operator):
     bl_description = 'Assigns meshname to object name. Works with all selected objects'
 
     def process_object(self, obj):
-        obj.name = obj.data.name
+        if obj.type != "EMPTY":
+            obj.name = obj.data.name
 
 
 class BTIsolateLayersOperator(bpy.types.Operator):
@@ -11664,7 +11667,7 @@ class PaSearchInstanses1(bpy.types.Operator):
         self.TRESHOLD = 0.002
         self.PERCENT = config.si_percent
 
-        sel_objs = bpy.context.selected_objects
+        sel_objs = [obj for obj in bpy.context.selected_objects if obj.type == "MESH"]
         act_obj = bpy.context.active_object
         instances = PaSearchInstanses2.findFragments(self, act_obj, sel_objs, config.filter_mats)
         bpy.ops.object.select_all(action='DESELECT')
@@ -11678,6 +11681,11 @@ class PaSearchInstanses2(bpy.types.Operator):
     bl_idname = "paul.search_instanses_2"
     bl_label = "Search Instanses"
     bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and \
+               context.active_object.type == 'MESH'
 
     def findFragments(self, act_obj, sel_objs, filter_mats):
         def compMeshesVerts2(obj1, obj2, treshold, percent):
