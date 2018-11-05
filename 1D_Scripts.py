@@ -81,12 +81,13 @@
 # 0-10-04(23.10.2018) Set the panels in order
 # 0-10-05(23.10.2018) Changed the order of the tools
 # 0-10-06(27.10.2018) Filter on the Mesh of the functions guess_active_instance, chain_instance, obname_to_meshname, meshname_to_obname
+# 0-10-07(06.11.2018) Changed (Mats sort) show in seacher
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 6),
+    "version": (0, 10, 7),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -8008,7 +8009,7 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.operator("object.misc", text='Mats selected to active').type_op = 14
             row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats sort').type_op = 15
+            row.operator("material.paul_sort", text='Mats sort')
             row = col_top.row(align=True)
             row.operator("object.misc", text='Mats suppress RGB').type_op = 4
             row = col_top.row(align=True)
@@ -9164,6 +9165,16 @@ def main_railer(dist=1, z_up=False, follow_path=False, flat=False, instance=Fals
         bm.free()
         bm_l.free()
     return True
+
+
+class PaMatsSort(bpy.types.Operator):
+    bl_idname = "material.paul_sort"
+    bl_label = "Mats sort"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        bpy.ops.object.misc(type_op=15)
+        return {'FINISHED'}
 
 
 class PaCurveSwap2D3D(bpy.types.Operator):
@@ -12018,7 +12029,8 @@ classes = [eap_op0, eap_op1, eap_op2, eap_op3, ChunksOperator, f_op0,
            BTBatchGPencilEraserOperator, BTAllModifiersEraserOperator, BTAllSubsurfsEraserOperator,
            BTZeroSubsurfsEraserOperator, BTEdgeSplitRemoverOperator, BTMirrorMDFRemoverOperator,
            BTMultipleUVMapsRemoverOperator, BTBevelModifierRemoverOperator, BTEmptySlotsRemoverOperator,
-           BatchOperatorSettings, PaObjSwitchOnOff, PaObjSelectModified, PaCurvesSelect2D, PaCurveSwap2D3D
+           BatchOperatorSettings, PaObjSwitchOnOff, PaObjSelectModified, PaCurvesSelect2D, PaCurveSwap2D3D,
+           PaMatsSort
            ]
 
 addon_keymaps = []
