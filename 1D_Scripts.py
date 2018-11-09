@@ -82,12 +82,13 @@
 # 0-10-05(23.10.2018) Changed the order of the tools
 # 0-10-06(27.10.2018) Filter on the Mesh of the functions guess_active_instance, chain_instance, obname_to_meshname, meshname_to_obname
 # 0-10-07(06.11.2018) Changed (Mats sort) show in seacher
+# 0-10-08(09.11.2018) Change (UV Scaler): get active UVMap
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 7),
+    "version": (0, 10, 8),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7250,7 +7251,9 @@ def mainUvScaler(SIZE):
     for obj in objs:
         # The names of the object and map
         objName = obj.name
-        uvMapName = 'UVMap'
+        uvMapName = obj.data.uv_layers.active
+        if uvMapName is None:
+            uvMapName = 'UVMap'
 
         # Defines the pivot and scale
         pivot = Vector((0, 0))
