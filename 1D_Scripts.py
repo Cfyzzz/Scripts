@@ -83,12 +83,13 @@
 # 0-10-06(27.10.2018) Filter on the Mesh of the functions guess_active_instance, chain_instance, obname_to_meshname, meshname_to_obname
 # 0-10-07(06.11.2018) Changed (Mats sort) show in seacher
 # 0-10-09(16.11.2018) Fixed panel Batch render
+# 0-10-10(16.11.2018) Fixed UV Scaler
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 9),
+    "version": (0, 10, 10),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7248,12 +7249,15 @@ def mainUvScaler(SIZE):
     bpy.ops.object.mode_set(mode="OBJECT")
     instancesSelectUnique()
     objs = [o for o in bpy.context.scene.objects if o.select]
+    uvMap = bpy.context.active_object.data.uv_layers.active
+    if uvMap is None:
+        return
+
+    uvMapName = uvMap.name
     for obj in objs:
         # The names of the object and map
+        bpy.context.scene.objects.active = obj
         objName = obj.name
-        uvMapName = obj.data.uv_layers.active
-        if uvMapName is None:
-            uvMapName = 'UVMap'
 
         # Defines the pivot and scale
         pivot = Vector((0, 0))
