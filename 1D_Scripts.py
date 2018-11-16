@@ -82,13 +82,13 @@
 # 0-10-05(23.10.2018) Changed the order of the tools
 # 0-10-06(27.10.2018) Filter on the Mesh of the functions guess_active_instance, chain_instance, obname_to_meshname, meshname_to_obname
 # 0-10-07(06.11.2018) Changed (Mats sort) show in seacher
-# 0-10-08(09.11.2018) Change (UV Scaler): get active UVMap
+# 0-10-09(16.11.2018) Fixed panel Batch render
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 8),
+    "version": (0, 10, 9),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -8083,7 +8083,7 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator('scene.camswitch', text='Prev', icon='TRIA_LEFT').next = False
             row.operator('scene.camswitch', text='Next', icon='TRIA_RIGHT').next = True
 
-            col_top = box.column(align=True)
+            col_top = col_render.column(align=True)
 
             split = col_top.split()
             if lt.disp_batch:
@@ -8100,7 +8100,7 @@ class LayoutSSPanel(bpy.types.Panel):
                 col_top = box.column(align=True)
                 col_top.operator("paul.read_camera_setup", text='RCS Read Camera setup')
 
-            col_top = box.column(align=True)
+            col_top = col_render.column(align=False)
             col_top.operator('timelinerender.start', icon='TIME', text='Start TimeLine Render')
 
         split = col.split()
