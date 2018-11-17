@@ -84,12 +84,13 @@
 # 0-10-07(06.11.2018) Changed (Mats sort) show in seacher
 # 0-10-09(16.11.2018) Fixed panel Batch render
 # 0-10-10(16.11.2018) Fixed UV Scaler
+# 0-10-11(17.11.2018) Add (Nest Zone) Polyedge select
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 10),
+    "version": (0, 10, 11),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -8316,6 +8317,9 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.operator("uv.scaler", text='UV Scaler')
 
+            row = col_top.row(align=True)
+            row.operator(PaPolyedgeSelect.bl_idname, text='Polyedge select')
+
 
 class D1_fedge(bpy.types.Operator):
     ''' \
@@ -11335,6 +11339,25 @@ class PaObjFilterLocalRotated(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class PaPolyedgeSelect(bpy.types.Operator):
+    """Filter contacting edges of selected faces"""
+    bl_idname = "paul.polyedge_select"
+    bl_label = "Polyedge select"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and \
+               context.active_object.type == 'MESH'
+
+    def execute(self, context):
+        config = bpy.context.window_manager.paul_manager
+        bpy.ops.mesh.hide(unselected=True)
+        bpy.ops.mesh.region_to_loop()
+        bpy.ops.mesh.select_all(action='INVERT')
+        return {'FINISHED'}
+
+
 class PaMisc_MatsFilterDupes(bpy.types.Operator):
     """filter objects with origing in one place"""
     bl_idname = "paul.filter_dupes_origins"
@@ -12037,7 +12060,7 @@ classes = [eap_op0, eap_op1, eap_op2, eap_op3, ChunksOperator, f_op0,
            BTZeroSubsurfsEraserOperator, BTEdgeSplitRemoverOperator, BTMirrorMDFRemoverOperator,
            BTMultipleUVMapsRemoverOperator, BTBevelModifierRemoverOperator, BTEmptySlotsRemoverOperator,
            BatchOperatorSettings, PaObjSwitchOnOff, PaObjSelectModified, PaCurvesSelect2D, PaCurveSwap2D3D,
-           PaMatsSort
+           PaMatsSort, PaPolyedgeSelect
            ]
 
 addon_keymaps = []
