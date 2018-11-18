@@ -84,13 +84,13 @@
 # 0-10-07(06.11.2018) Changed (Mats sort) show in seacher
 # 0-10-09(16.11.2018) Fixed panel Batch render
 # 0-10-10(16.11.2018) Fixed UV Scaler
-# 0-10-11(17.11.2018) Add (Nest Zone) Polyedge select
+# 0-10-12(18.11.2018) Fixed (Test Zone) Polyedge select
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 11),
+    "version": (0, 10, 12),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -11351,9 +11351,10 @@ class PaPolyedgeSelect(bpy.types.Operator):
                context.active_object.type == 'MESH'
 
     def execute(self, context):
-        config = bpy.context.window_manager.paul_manager
+        bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='EDGE')
         bpy.ops.mesh.hide(unselected=True)
         bpy.ops.mesh.region_to_loop()
+        bpy.ops.mesh.reveal()
         bpy.ops.mesh.select_all(action='INVERT')
         return {'FINISHED'}
 
