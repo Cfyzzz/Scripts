@@ -85,12 +85,13 @@
 # 0-10-09(16.11.2018) Fixed panel Batch render
 # 0-10-10(16.11.2018) Fixed UV Scaler
 # 0-10-12(18.11.2018) Fixed (Test Zone) Polyedge select
+# 0-10-13(21.11.2018) Added (Test Zone) Ssmooth
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 12),
+    "version": (0, 10, 13),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -118,6 +119,7 @@ from collections import namedtuple
 from operator import mul, itemgetter, add, attrgetter
 from functools import reduce
 from abc import abstractmethod, ABCMeta
+from addon_utils import check
 
 list_z = []
 mats_idx = []
@@ -8320,6 +8322,9 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.operator(PaPolyedgeSelect.bl_idname, text='Polyedge select')
 
+            row = col_top.row(align=True)
+            row.operator(PaSsmooth.bl_idname, text='Ssmooth')
+
 
 class D1_fedge(bpy.types.Operator):
     ''' \
@@ -9701,7 +9706,7 @@ class GetMatsOperator(bpy.types.Operator):
 class SSOperator(bpy.types.Operator):
     """Tooltip"""
     bl_idname = "mesh.simple_scale_operator"
-    bl_label = "SScale operator"
+    bl_label = "Scale operator"
     bl_options = {'REGISTER', 'UNDO'}
 
     type_op = bpy.props.IntProperty(name='type_op', default=0, options={'HIDDEN'})
@@ -11359,6 +11364,27 @@ class PaPolyedgeSelect(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class PaSsmooth(bpy.types.Operator):
+    """Mode-dependent smooth"""
+    bl_idname = "paul.ssmooth"
+    bl_label = "Ssmooth"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and \
+               context.active_object.type == 'MESH' and \
+               context.object.mode == "EDIT"
+
+    def execute(self, context):
+        if bpy.context.tool_settings.mesh_select_mode[0] and check("mesh_looptools")[0]:
+            bpy.ops.mesh.looptools_relax(input='selected', interpolation='cubic', iterations='1', regular=True)
+        else:
+            bpy.ops.mesh.vertices_smooth()
+
+        return {'FINISHED'}
+
+
 class PaMisc_MatsFilterDupes(bpy.types.Operator):
     """filter objects with origing in one place"""
     bl_idname = "paul.filter_dupes_origins"
@@ -12061,7 +12087,7 @@ classes = [eap_op0, eap_op1, eap_op2, eap_op3, ChunksOperator, f_op0,
            BTZeroSubsurfsEraserOperator, BTEdgeSplitRemoverOperator, BTMirrorMDFRemoverOperator,
            BTMultipleUVMapsRemoverOperator, BTBevelModifierRemoverOperator, BTEmptySlotsRemoverOperator,
            BatchOperatorSettings, PaObjSwitchOnOff, PaObjSelectModified, PaCurvesSelect2D, PaCurveSwap2D3D,
-           PaMatsSort, PaPolyedgeSelect
+           PaMatsSort, PaPolyedgeSelect, PaSsmooth
            ]
 
 addon_keymaps = []
