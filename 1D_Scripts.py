@@ -86,12 +86,13 @@
 # 0-10-10(16.11.2018) Fixed UV Scaler
 # 0-10-12(18.11.2018) Fixed (Test Zone) Polyedge select
 # 0-10-13(21.11.2018) Added (Test Zone) Ssmooth
+# 0-10-14(23.11.2018) Fixed (Test Zone) Ssmooth - add Shortcut
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 13),
+    "version": (0, 10, 14),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -11366,7 +11367,7 @@ class PaPolyedgeSelect(bpy.types.Operator):
 
 class PaSsmooth(bpy.types.Operator):
     """Mode-dependent smooth"""
-    bl_idname = "paul.ssmooth"
+    bl_idname = "mesh.ssmooth"
     bl_label = "Ssmooth"
     bl_options = {'REGISTER', 'UNDO'}
 
