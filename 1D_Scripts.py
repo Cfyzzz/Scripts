@@ -87,12 +87,13 @@
 # 0-10-12(18.11.2018) Fixed (Test Zone) Polyedge select
 # 0-10-13(21.11.2018) Added (Test Zone) Ssmooth
 # 0-10-14(23.11.2018) Fixed (Test Zone) Ssmooth - add Shortcut
-
+# 0-10-15(12.12.2018) Changed (Corner Edges): enable To Active edge
+# 0-10-16(12.12.2018) Changed (Stairs maker): go to source object after execution
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 14),
+    "version": (0, 10, 16),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -2889,8 +2890,12 @@ def StairsMaker(self=None):
         memory_new_face(new_verts_co, new_faces, base_vi)
         base_vi += 2
 
-        createMeshFromData("new_lift", obj.location, new_verts_co, new_faces)
-        obj.select = False
+        obj_lift = createMeshFromData("new_lift", obj.location, new_verts_co, new_faces)
+        edit_mode_out()
+        bpy.context.scene.objects.active = obj
+        obj.select = True
+        obj_lift.select = False
+        edit_mode_in()
 
     bm.free()
 
@@ -7817,15 +7822,10 @@ class LayoutSSPanel(bpy.types.Panel):
                 row2.operator("mesh.modal_cheredator", text='run reduce loop').type_op = 1
 
             # Set Edges Length
-            row = col_top.row(align=True)
-            if lt.disp_sel:
-                row.prop(lt, "disp_sel", text="Set Edges Length", icon='DOWNARROW_HLT')
-            else:
-                row.prop(lt, "disp_sel", text="Set Edges Length", icon='RIGHTARROW')
-
-            if lt.disp_sel:
-                box2 = col_top.column(align=True).box().box()
-                row = box2.column(align=True)
+            row = col_top.column(align=True)
+            lay_sel = panel_add_spoiler(base_layout=row, prop='disp_sel', text='Set Edges Length')
+            if lay_sel:
+                row = lay_sel.column(align=True)
                 row.operator("mesh.setedgslen", text='Set from MID').type_op = 0
                 row.operator("mesh.setedgslen", text='Set from cursor').type_op = 3
                 row.operator("mesh.setedgslen", text='Set to cursor').type_op = 1
@@ -11590,7 +11590,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     fedge_nonquads = BoolProperty(name='nonquads', default=True)
     fedge_WRONG_AREA = bpy.props.FloatProperty(name="WRONG_AREA", default=0.02, precision=2)
     corner_active_edge = BoolProperty(name='coner_active_edge', default=False)
-    to_corner_active_edge = BoolProperty(name='to_coner_active_edge', default=False)
+    to_corner_active_edge = BoolProperty(name='to_coner_active_edge', default=True)
     corner_overlap = BoolProperty(name='corner_overlap', default=False)
     active_length_ratio = BoolProperty(name='active_length_ratio', default=False)
     verts_activate = BoolProperty(name='verts_activate', default=False)
