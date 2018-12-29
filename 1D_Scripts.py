@@ -89,11 +89,12 @@
 # 0-10-14(23.11.2018) Fixed (Test Zone) Ssmooth - add Shortcut
 # 0-10-15(12.12.2018) Changed (Corner Edges): enable To Active edge
 # 0-10-16(12.12.2018) Changed (Stairs maker): go to source object after execution
+# 0-10-17(29.12.2018) Reformat (Loop resolve): add shortcut
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 16),
+    "version": (0, 10, 17),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -7759,7 +7760,7 @@ class LayoutSSPanel(bpy.types.Panel):
 
             # Loop Resolve
             row = col_top.row(align=True)
-            row.operator("paul.loop_resolve", text='Loop Resolve')
+            row.operator("mesh.loop_resolve", text='Loop Resolve')
             row.prop(lt, "disp_loopresolve", text='', icon='DOWNARROW_HLT' if lt.disp_loopresolve else 'RIGHTARROW')
             if lt.disp_loopresolve:
                 row = col_top.row(align=True)
@@ -10419,7 +10420,7 @@ class PaGroupSelectLinked(bpy.types.Operator):
 
 class PaLoopResolve(bpy.types.Operator):
     """Resolve loop density by Besier in vertex mode or split edges in edges mode"""
-    bl_idname = "paul.loop_resolve"
+    bl_idname = "mesh.loop_resolve"
     bl_label = "Loop Resolve"
     bl_options = {'REGISTER', 'UNDO'}
 
