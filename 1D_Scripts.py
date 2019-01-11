@@ -89,12 +89,12 @@
 # 0-10-14(23.11.2018) Fixed (Test Zone) Ssmooth - add Shortcut
 # 0-10-15(12.12.2018) Changed (Corner Edges): enable To Active edge
 # 0-10-16(12.12.2018) Changed (Stairs maker): go to source object after execution
-# 0-10-17(29.12.2018) Reformat (Loop resolve): add shortcut
+# 0-10-18(11.01.2019) Rename labels for quick search
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 17),
+    "version": (0, 10, 18),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -1091,7 +1091,7 @@ class BTBatchOperatorMixin(object):
 class BTSelectInstancesOperator(bpy.types.Operator):
     bl_idname = 'paul.select_instances'
     # Double "II" just for quick "space" start of operator (space -> "ii", an there is operator)
-    bl_label = 'Select IInstances 1D_Scripts'
+    bl_label = 'Select IInstances 1D_Scripts шш ШШ'
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -1146,7 +1146,7 @@ class BTFilterInstancesOperator(BTBatchOperatorMixin, bpy.types.Operator):
 
 class BTObjDistributeByXOperator(bpy.types.Operator):
     bl_idname = 'paul.obj_distribute_by_x'
-    bl_label = 'Obj Distribute by X 1D_Scripts'
+    bl_label = 'Obj Distribute by X 1D_Scripts byx BYX ИНЧ инч'
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -8334,7 +8334,7 @@ class D1_fedge(bpy.types.Operator):
     Выделяет потеряные рёбра, потом вершины и грани, каждый раз вызываясь. \
     '''
     bl_idname = "object.fedge"
-    bl_label = "Fffedge"
+    bl_label = "Fffedge ААА ааа"
 
     selected_show = False
     selected_hide = False
@@ -9356,7 +9356,7 @@ class PaMakeBorder(bpy.types.Operator):
 
 class PaPropagateObname(bpy.types.Operator):
     bl_idname = "paul.propagate_obname"
-    bl_label = "Propagate Obname"
+    bl_label = "Propagate Obname AGA aga фпф ФПФ"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -9826,7 +9826,7 @@ class BarcOperator(bpy.types.Operator):
 
 class PaBarcCreateOperator(bpy.types.Operator):
     bl_idname = "paul.barc_create"
-    bl_label = "BARC - create BARC"
+    bl_label = "BARC - create BARC BB bb ии ИИ"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -10448,7 +10448,7 @@ class PaLoopReduce(bpy.types.Operator):
 
 class PaMatsUnclone(bpy.types.Operator):
     bl_idname = "paul.mats_unclone"
-    bl_label = "Mats Unclone"
+    bl_label = "Mats Unclone ГТС гтс"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -10470,7 +10470,7 @@ class PaMatsPurgeout(bpy.types.Operator):
 
 class PaObnameMats(bpy.types.Operator):
     bl_idname = "paul.obname_mat"
-    bl_label = "Obname materials"
+    bl_label = "Obname materials OBNN obnn ЩИТ щит"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -10521,7 +10521,7 @@ class PsSelSameVerts(bpy.types.Operator):
 class PaSetAutoSmooth(bpy.types.Operator):
     """set Autosmooth angle 70 on selection"""
     bl_idname = "paul.set_autosmooth"
-    bl_label = "Set Autosmooth"
+    bl_label = "Set Autosmooth ФГ фг"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -11112,7 +11112,7 @@ class PaVolumeSelect(bpy.types.Operator):
 class PaVertsProjectOnEdge(bpy.types.Operator):
     """split edge by perpendicular projection of other edges"""
     bl_idname = "paul.verts_project_on_edge"
-    bl_label = "Vverts project"
+    bl_label = "Vverts project ММ мм"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -11293,7 +11293,7 @@ class PaEdgesPairFill(bpy.types.Operator):
 
 class PaObjMultySureUV(bpy.types.Operator):
     bl_idname = "paul.multy_sureuv"
-    bl_label = "Obj MMuulty SureUV"
+    bl_label = "Obj MMuulty SureUV MM mm ьь ЬЬ"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -11724,7 +11724,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
 class PaSearchInstanses1(bpy.types.Operator):
     r"""Поиск потенциальных инстансов по активному объекту"""
     bl_idname = "paul.search_instanses_1"
-    bl_label = "Search Instanses by Active Object"
+    bl_label = "Search Instanses by Active Object Guess пг ПГ GG ПП пп"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
