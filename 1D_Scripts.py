@@ -90,11 +90,13 @@
 # 0-10-15(12.12.2018) Changed (Corner Edges): enable To Active edge
 # 0-10-16(12.12.2018) Changed (Stairs maker): go to source object after execution
 # 0-10-18(11.01.2019) Rename labels for quick search
+# 0-10-19(10.02.2019) Added (Materials) Mats Showcase
+
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 18),
+    "version": (0, 10, 19),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -106,6 +108,7 @@ import bpy, bmesh, mathutils, math
 from mathutils import Vector, Matrix
 from mathutils.geometry import intersect_line_plane, intersect_point_line, intersect_line_line
 from math import sin, cos, pi, sqrt, degrees, tan, radians
+from colorsys import hsv_to_rgb, rgb_to_hsv
 import os, urllib
 from bpy.props import (BoolProperty,
                        FloatProperty,
@@ -6793,6 +6796,72 @@ def getMatsAct2Pas():
     bpy.context.scene.objects.active = obj_act
 
 
+def get_hsv_circle(color_base, number_colors):
+    if number_colors <= 0:
+        number_colors = 1
+
+    color_parent = rgb_to_hsv(*color_base)
+    step_color_h = 1 / number_colors
+    for i in range(number_colors):
+        color = hsv_to_rgb((i + 1) * step_color_h, color_parent[1], color_parent[2])
+        yield color
+
+
+def materials_colorize():
+    obj = bpy.context.active_object
+    materials = obj.material_slots
+    number_colors = len(materials)
+    if number_colors == 0:
+        return False
+
+    bpy.ops.object.mode_set(mode="EDIT")
+    color = get_hsv_circle(color_base=materials[0].material.diffuse_color, number_colors=number_colors)
+    for i in range(number_colors):
+        bpy.ops.mesh.select_all(action="DESELECT")
+        obj.active_material_index = obj.data.materials.find(materials[i].material.name)
+        if obj.active_material:
+            obj.active_material.diffuse_color = next(color)
+            bpy.ops.object.material_slot_select()
+
+    bpy.ops.mesh.select_all(action="DESELECT")
+    bpy.ops.object.mode_set(mode="OBJECT")
+    return True
+
+
+def materials_showcase():
+    bpy.ops.object.mode_set(mode="EDIT")
+
+    obj = bpy.context.active_object
+    mesh = obj.data
+    materials = obj.material_slots
+
+    number_pols = len(mesh.polygons)
+    number_colors = len(materials)
+
+    if number_colors == 0:
+        return False
+
+    if number_colors < number_pols:
+        start_index = (number_pols - number_colors) // 2
+    else:
+        start_index = 0
+
+    end_index = start_index + min(number_pols, number_colors)
+    color = get_hsv_circle(color_base=materials[0].material.diffuse_color, number_colors=number_colors)
+    for i in range(start_index, end_index):
+        bpy.ops.mesh.select_all(action="DESELECT")
+        bpy.ops.object.mode_set(mode="OBJECT")
+        obj.data.polygons[i].select = True
+        bpy.ops.object.mode_set(mode="EDIT")
+        obj.active_material_index = obj.data.materials.find(materials[i - start_index].material.name)
+        obj.active_material.diffuse_color = next(color)
+        bpy.ops.object.material_slot_assign()
+
+    bpy.ops.mesh.select_all(action="DESELECT")
+    bpy.ops.object.mode_set(mode="OBJECT")
+    return True
+
+
 def matchProp():
     cont = bpy.context
     obj = cont.active_object
@@ -7530,8 +7599,8 @@ def panel_add_button_and_box(base_layout, operator, text, spoiler, align=False):
     row.operator(operator, text=text)
     row.prop(lt, spoiler, text='', icon='DOWNARROW_HLT' if getattr(lt, spoiler, False) else 'RIGHTARROW')
     if getattr(lt, spoiler, False):
-        row = base_layout.row()
-        box2 = row.box().box()
+        row2 = base_layout.row(align=True)
+        box2 = row2.box().box()
         col2 = box2.column()
         return col2
     return None
@@ -8034,6 +8103,14 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("object.misc", text='Matname HVS del').type_op = 10
             row = col_top.row(align=True)
             row.operator("object.misc", text='Matnodes switch').type_op = 7
+
+            lay_mats_showcase = panel_add_button_and_box(base_layout=lay_misc, operator=PaMatsShowcaseOperator.bl_idname,
+                                                         text='Mats Showcase', spoiler='display_mats_showcase',
+                                                         align=True)
+            if lay_mats_showcase:
+                col_top = lay_mats_showcase.column(align=False)
+                row = col_top.row(align=False)
+                row.prop(lt, "mats_showcase_setting", text='Mode')
 
         lay_build = panel_add_spoiler(base_layout=col_main, prop='disp_build', text='Build')
         if lay_build:
@@ -11442,6 +11519,30 @@ class PaMisc_MatnodesSwitch(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class PaMatsShowcaseOperator(bpy.types.Operator):
+    bl_idname = "material.mats_showcase"
+    bl_label = "Mats Showcase"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.type == 'MESH'
+
+    def execute(self, context):
+        config = bpy.context.window_manager.paul_manager
+        variant = config.mats_showcase_setting
+        if variant == "S":
+            result = materials_showcase()
+        elif variant == "C":
+            result = materials_colorize()
+        else:
+            result = False
+
+        if not result:
+            return {'CANCELED'}
+        return {'FINISHED'}
+
+
 class paul_managerProps(bpy.types.PropertyGroup):
     """
     Fake module like class
@@ -11565,6 +11666,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_objed = bpy.props.BoolProperty(name='disp_objed', default=False)
     disp_build = bpy.props.BoolProperty(name='disp_build', default=False)
     disp_materials = bpy.props.BoolProperty(name='disp_materials', default=False)
+    display_mats_showcase = bpy.props.BoolProperty(name='display_mats_showcase', default=False)
 
     mborder_size = FloatProperty(name="mborder_size", default=0.1, precision=1, max=100, min=-100)
 
@@ -11612,6 +11714,13 @@ class paul_managerProps(bpy.types.PropertyGroup):
                ('FC', "filter chunks", "")
                ),
         default='SF',
+    )
+    mats_showcase_setting = EnumProperty(
+        name="Mode",
+        items=(('S', "Showcase", ""),
+               ('C', "Colorize", ""),
+               ),
+        default='S',
     )
 
     # List of operator properties, the attributes will be assigned
@@ -12089,7 +12198,7 @@ classes = [eap_op0, eap_op1, eap_op2, eap_op3, ChunksOperator, f_op0,
            BTZeroSubsurfsEraserOperator, BTEdgeSplitRemoverOperator, BTMirrorMDFRemoverOperator,
            BTMultipleUVMapsRemoverOperator, BTBevelModifierRemoverOperator, BTEmptySlotsRemoverOperator,
            BatchOperatorSettings, PaObjSwitchOnOff, PaObjSelectModified, PaCurvesSelect2D, PaCurveSwap2D3D,
-           PaMatsSort, PaPolyedgeSelect, PaSsmooth
+           PaMatsSort, PaPolyedgeSelect, PaSsmooth, PaMatsShowcaseOperator
            ]
 
 addon_keymaps = []
