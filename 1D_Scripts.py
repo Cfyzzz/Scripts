@@ -91,12 +91,13 @@
 # 0-10-16(12.12.2018) Changed (Stairs maker): go to source object after execution
 # 0-10-18(11.01.2019) Rename labels for quick search
 # 0-10-19(10.02.2019) Added (Materials) Mats Showcase
+# 0-10-20(18.02.2019) Changed (Materials) Mats Showcase and Colorize
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 19),
+    "version": (0, 10, 20),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -6807,7 +6808,7 @@ def get_hsv_circle(color_base, number_colors):
         yield color
 
 
-def materials_colorize():
+def materials_colorize(self):
     obj = bpy.context.active_object
     materials = obj.material_slots
     number_colors = len(materials)
@@ -6825,10 +6826,11 @@ def materials_colorize():
 
     bpy.ops.mesh.select_all(action="DESELECT")
     bpy.ops.object.mode_set(mode="OBJECT")
-    return True
+    self.report({'INFO'}, f"{number_colors} materials")
+    return number_colors
 
 
-def materials_showcase():
+def materials_showcase(self):
     bpy.ops.object.mode_set(mode="EDIT")
 
     obj = bpy.context.active_object
@@ -6847,18 +6849,17 @@ def materials_showcase():
         start_index = 0
 
     end_index = start_index + min(number_pols, number_colors)
-    color = get_hsv_circle(color_base=materials[0].material.diffuse_color, number_colors=number_colors)
     for i in range(start_index, end_index):
         bpy.ops.mesh.select_all(action="DESELECT")
         bpy.ops.object.mode_set(mode="OBJECT")
         obj.data.polygons[i].select = True
         bpy.ops.object.mode_set(mode="EDIT")
         obj.active_material_index = obj.data.materials.find(materials[i - start_index].material.name)
-        obj.active_material.diffuse_color = next(color)
         bpy.ops.object.material_slot_assign()
 
     bpy.ops.mesh.select_all(action="DESELECT")
     bpy.ops.object.mode_set(mode="OBJECT")
+    self.report({'INFO'}, f"{number_colors} materials")
     return True
 
 
@@ -8103,14 +8104,11 @@ class LayoutSSPanel(bpy.types.Panel):
             row.operator("object.misc", text='Matname HVS del').type_op = 10
             row = col_top.row(align=True)
             row.operator("object.misc", text='Matnodes switch').type_op = 7
+            row = col_top.row(align=True)
+            row.operator(PaMatsShowcaseOperator.bl_idname, text='Mats Showcase')
+            row = col_top.row(align=True)
+            row.operator(PaMatsColorizeOperator.bl_idname, text='Mats Colorize')
 
-            lay_mats_showcase = panel_add_button_and_box(base_layout=lay_misc, operator=PaMatsShowcaseOperator.bl_idname,
-                                                         text='Mats Showcase', spoiler='display_mats_showcase',
-                                                         align=True)
-            if lay_mats_showcase:
-                col_top = lay_mats_showcase.column(align=False)
-                row = col_top.row(align=False)
-                row.prop(lt, "mats_showcase_setting", text='Mode')
 
         lay_build = panel_add_spoiler(base_layout=col_main, prop='disp_build', text='Build')
         if lay_build:
@@ -11529,16 +11527,22 @@ class PaMatsShowcaseOperator(bpy.types.Operator):
         return context.active_object is not None and context.active_object.type == 'MESH'
 
     def execute(self, context):
-        config = bpy.context.window_manager.paul_manager
-        variant = config.mats_showcase_setting
-        if variant == "S":
-            result = materials_showcase()
-        elif variant == "C":
-            result = materials_colorize()
-        else:
-            result = False
+        if not materials_showcase(self=self):
+            return {'CANCELED'}
+        return {'FINISHED'}
 
-        if not result:
+
+class PaMatsColorizeOperator(bpy.types.Operator):
+    bl_idname = "material.mats_colorize"
+    bl_label = "Mats Colorize"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.type == 'MESH'
+
+    def execute(self, context):
+        if not materials_colorize(self=self):
             return {'CANCELED'}
         return {'FINISHED'}
 
@@ -11666,7 +11670,6 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_objed = bpy.props.BoolProperty(name='disp_objed', default=False)
     disp_build = bpy.props.BoolProperty(name='disp_build', default=False)
     disp_materials = bpy.props.BoolProperty(name='disp_materials', default=False)
-    display_mats_showcase = bpy.props.BoolProperty(name='display_mats_showcase', default=False)
 
     mborder_size = FloatProperty(name="mborder_size", default=0.1, precision=1, max=100, min=-100)
 
@@ -11714,13 +11717,6 @@ class paul_managerProps(bpy.types.PropertyGroup):
                ('FC', "filter chunks", "")
                ),
         default='SF',
-    )
-    mats_showcase_setting = EnumProperty(
-        name="Mode",
-        items=(('S', "Showcase", ""),
-               ('C', "Colorize", ""),
-               ),
-        default='S',
     )
 
     # List of operator properties, the attributes will be assigned
@@ -12198,7 +12194,7 @@ classes = [eap_op0, eap_op1, eap_op2, eap_op3, ChunksOperator, f_op0,
            BTZeroSubsurfsEraserOperator, BTEdgeSplitRemoverOperator, BTMirrorMDFRemoverOperator,
            BTMultipleUVMapsRemoverOperator, BTBevelModifierRemoverOperator, BTEmptySlotsRemoverOperator,
            BatchOperatorSettings, PaObjSwitchOnOff, PaObjSelectModified, PaCurvesSelect2D, PaCurveSwap2D3D,
-           PaMatsSort, PaPolyedgeSelect, PaSsmooth, PaMatsShowcaseOperator
+           PaMatsSort, PaPolyedgeSelect, PaSsmooth, PaMatsShowcaseOperator, PaMatsColorizeOperator
            ]
 
 addon_keymaps = []
