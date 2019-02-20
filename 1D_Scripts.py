@@ -92,12 +92,13 @@
 # 0-10-18(11.01.2019) Rename labels for quick search
 # 0-10-19(10.02.2019) Added (Materials) Mats Showcase
 # 0-10-20(18.02.2019) Changed (Materials) Mats Showcase and Colorize
+# 0-10-21(18.02.2019) Changed (Materials) Mats Showcase and Colorize - old format string
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 20),
+    "version": (0, 10, 21),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -6826,7 +6827,7 @@ def materials_colorize(self):
 
     bpy.ops.mesh.select_all(action="DESELECT")
     bpy.ops.object.mode_set(mode="OBJECT")
-    self.report({'INFO'}, f"{number_colors} materials")
+    self.report({'INFO'}, str(number_colors)+" materials")
     return number_colors
 
 
@@ -6859,7 +6860,7 @@ def materials_showcase(self):
 
     bpy.ops.mesh.select_all(action="DESELECT")
     bpy.ops.object.mode_set(mode="OBJECT")
-    self.report({'INFO'}, f"{number_colors} materials")
+    self.report({'INFO'}, str(number_colors)+" materials")
     return True
 
 
