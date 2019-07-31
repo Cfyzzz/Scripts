@@ -93,12 +93,13 @@
 # 0-10-19(10.02.2019) Added (Materials) Mats Showcase
 # 0-10-20(18.02.2019) Changed (Materials) Mats Showcase and Colorize
 # 0-10-21(18.02.2019) Changed (Materials) Mats Showcase and Colorize - old format string
+# 0-10-22(31.07.2019) Fixed (Materials) mats only uncludes "." in name
 
 
 bl_info = {
     "name": "1D_Scripts",
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 10, 21),
+    "version": (0, 10, 22),
     "blender": (2, 7, 9),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -6605,6 +6606,9 @@ def matsUnclone():
     for obj in objs:
         len_mats_m1 = len(obj.material_slots) - 1
         for i, slt in enumerate(obj.material_slots):
+            if not "." in slt:
+                continue
+
             part = slt.name.rpartition('.')
             if part[2].isnumeric():
                 if part[0] in mats:
