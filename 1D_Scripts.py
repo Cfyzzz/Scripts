@@ -6606,7 +6606,7 @@ def matsUnclone():
     for obj in objs:
         len_mats_m1 = len(obj.material_slots) - 1
         for i, slt in enumerate(obj.material_slots):
-            if not "." in slt:
+            if not "." in slt.name:
                 continue
 
             part = slt.name.rpartition('.')
